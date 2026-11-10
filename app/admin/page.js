@@ -4,6 +4,13 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabaseClient';
 
 export default function AdminDashboard() {
+  // بيانات دخول الأدمن المعتمدة (يمكنك تغييرها هنا)
+  const ADMIN_EMAIL = 'admin@pixvavo.com';
+  const ADMIN_PASSWORD = '123456';
+
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [emailInput, setEmailInput] = useState('');
+  const [passwordInput, setPasswordInput] = useState('');
   const [productsList, setProductsList] = useState([]);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -20,6 +27,31 @@ export default function AdminDashboard() {
     galleryText: ''
   });
 
+  // التحقق من وجود جلسة سابقة متذكرة تسجيل الدخول
+  useEffect(() => {
+    const savedAuth = localStorage.getItem('admin_authenticated');
+    if (savedAuth === 'true') {
+      setIsAuthenticated(true);
+      fetchProducts();
+    }
+  }, []);
+
+  const handleLogin = (e) => {
+    e.preventDefault();
+    if (emailInput.trim().toLowerCase() === ADMIN_EMAIL.toLowerCase() && passwordInput === ADMIN_PASSWORD) {
+      setIsAuthenticated(true);
+      localStorage.setItem('admin_authenticated', 'true');
+      fetchProducts();
+    } else {
+      alert('البريد الإلكتروني أو كلمة السر غير صحيحة!');
+    }
+  };
+
+  const handleLogout = () => {
+    setIsAuthenticated(false);
+    localStorage.removeItem('admin_authenticated');
+  };
+
   const fetchProducts = async () => {
     setLoading(true);
     const { data, error } = await supabase
@@ -33,12 +65,7 @@ export default function AdminDashboard() {
     setLoading(false);
   };
 
-  useEffect(() => {
-    fetchProducts();
-  }, []);
-
   const handleTitleChange = (val) => {
-    // توليد slug تلقائي من العنوان
     const generatedSlug = val
       .trim()
       .toLowerCase()
@@ -58,7 +85,6 @@ export default function AdminDashboard() {
 
     setSaving(true);
 
-    // تحويل نص المعرض إلى مصفوفة روابط
     const galleryArray = formData.galleryText
       ? formData.galleryText.split('\n').map(item => item.trim()).filter(Boolean)
       : [formData.image_url];
@@ -78,7 +104,7 @@ export default function AdminDashboard() {
     const { error } = await supabase.from('products').insert([payload]);
 
     if (!error) {
-      alert('تمت إضافة المنتج وسيتولد له رابط صفحة هبوط فوراً!');
+      alert('تمت إضافة المنتج بنجاح!');
       setFormData({
         title: '',
         subtitle: '',
@@ -107,6 +133,57 @@ export default function AdminDashboard() {
     }
   };
 
+  // شاشة تسجيل الدخول بالتصميم الجديد (البريد الإلكتروني + كلمة السر)
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4" dir="rtl">
+        <div className="bg-white p-8 rounded-2xl shadow-xl max-w-sm w-full text-center space-y-5 border">
+          <div className="w-14 h-14 bg-[#faedcd] text-[#432818] rounded-full flex items-center justify-center mx-auto text-2xl font-bold shadow-sm">
+            🔒
+          </div>
+          <div>
+            <h2 className="text-xl font-black text-[#432818]">تسجيل دخول الأدمن</h2>
+            <p className="text-xs text-gray-500 mt-1">أدخل البريد الإلكتروني وكلمة السر للوصول للوحة التحكم</p>
+          </div>
+
+          <form onSubmit={handleLogin} className="space-y-3.5 text-right">
+            <div>
+              <label className="block text-xs font-bold text-gray-700 mb-1">البريد الإلكتروني</label>
+              <input
+                required
+                type="email"
+                placeholder="admin@pixvavo.com"
+                value={emailInput}
+                onChange={(e) => setEmailInput(e.target.value)}
+                className="w-full p-3 rounded-xl border border-gray-300 text-sm focus:outline-none focus:border-[#754b2d] dir-ltr text-left"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-gray-700 mb-1">كلمة السر</label>
+              <input
+                required
+                type="password"
+                placeholder="••••••••"
+                value={passwordInput}
+                onChange={(e) => setPasswordInput(e.target.value)}
+                className="w-full p-3 rounded-xl border border-gray-300 text-sm focus:outline-none focus:border-[#754b2d] dir-ltr text-left"
+              />
+            </div>
+
+            <button
+              type="submit"
+              className="w-full py-3.5 bg-[#754b2d] hover:bg-[#432818] text-white font-bold rounded-xl transition text-sm cursor-pointer shadow-md mt-2"
+            >
+              تسجيل الدخول
+            </button>
+          </form>
+        </div>
+      </div>
+    );
+  }
+
+  // الواجهة الرئيسية للوحة التحكم بعد تسجيل الدخول
   return (
     <div className="min-h-screen bg-gray-50 text-gray-800 p-4 sm:p-8" dir="rtl">
       <div className="max-w-5xl mx-auto space-y-8">
@@ -117,9 +194,17 @@ export default function AdminDashboard() {
             <h1 className="text-2xl font-black text-[#432818]">لوحة تحكم المنتجات الصفحات الديناميكية</h1>
             <p className="text-xs text-gray-500 mt-1">أضف منتجاً جديداً ليصبح له رابط صفحة هبوط مستقلة تلقائياً</p>
           </div>
-          <span className="bg-[#faedcd] text-[#432818] text-xs font-bold px-3 py-1.5 rounded-full">
-            إجمالي المنتجات: {productsList.length}
-          </span>
+          <div className="flex items-center gap-3">
+            <span className="bg-[#faedcd] text-[#432818] text-xs font-bold px-3 py-1.5 rounded-full">
+              إجمالي المنتجات: {productsList.length}
+            </span>
+            <button
+              onClick={handleLogout}
+              className="bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold px-3 py-1.5 rounded-lg transition"
+            >
+              تسجيل الخروج 🚪
+            </button>
+          </div>
         </div>
 
         {/* Add Product Form */}
@@ -238,14 +323,14 @@ export default function AdminDashboard() {
               type="submit"
               className="w-full py-3.5 bg-[#754b2d] hover:bg-[#432818] text-white font-bold rounded-xl transition shadow-md cursor-pointer disabled:opacity-50"
             >
-              {saving ? 'جاري التنسيق والإضافة...' : 'إضافة المنتج وإنشاء صفحة الهبوط فوراً 🚀'}
+              {saving ? 'جاري الإضافة...' : 'إضافة المنتج وإنشاء صفحة الهبوط فوراً 🚀'}
             </button>
           </form>
         </div>
 
         {/* Existing Products List */}
         <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 space-y-4">
-          <h2 className="text-lg font-bold text-gray-800 border-b pb-3">قائمة المنتجات وصفحات الهبوط الحالية</h2>
+          <h2 className="text-lg font-bold text-gray-800 border-b pb-3">قائمة المنتجات الحالية</h2>
           
           {loading ? (
             <p className="text-sm text-gray-500 text-center py-4">جاري جلب المنتجات...</p>
