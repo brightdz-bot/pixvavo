@@ -1,12 +1,19 @@
 'use client';
 
-import { useState, useEffect, use } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '../../../lib/supabaseClient';
 
 export default function DynamicProductLandingPage({ params }) {
-  // فك التغليف عن params في Next.js
-  const resolvedParams = use(params);
-  const slugId = resolvedParams.id;
+  // قراءة الـ slug بطريقة آمنة تمنع Client-side Exception
+  const [slugId, setSlugId] = useState('');
+
+  useEffect(() => {
+    Promise.resolve(params).then((resolvedParams) => {
+      if (resolvedParams && resolvedParams.id) {
+        setSlugId(resolvedParams.id);
+      }
+    });
+  }, [params]);
 
   const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx_xl6iWvDlh2QDtLGgLQUz8fHh2ilJqyejT_18jm3gK_DGGPqg6olAyY3iZJVyu26a/exec';
   const STORE_WHATSAPP_NUMBER = '213798353165';
@@ -37,29 +44,16 @@ export default function DynamicProductLandingPage({ params }) {
 
   const [communesList, setCommunesList] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isUserInTrackingMode, setIsUserInTrackingMode] = useState(false);
-  const [currentActiveOrderId, setCurrentActiveOrderId] = useState('');
 
   const [showSuccessModal, setShowSuccessModal] = useState(false);
-  const [showNewOrderModal, setShowNewOrderModal] = useState(false);
-  const [showOrderPromptModal, setShowOrderPromptModal] = useState(false);
-
-  const [trackingDetails, setTrackingDetails] = useState({
-    orderId: '',
-    orderName: '',
-    total: '',
-    status: 'قيد التأكيد',
-    trackingCode: '28-H8G9NDFX0V-ZR',
-    customerName: ''
-  });
-
-  const [searchInput, setSearchInput] = useState('');
   const [lastOrderDetails, setLastOrderDetails] = useState(null);
 
-  // جلب المنتج المحدد بناءً على الـ slug في الرابط
+  // جلب المنتج المحدد من Supabase بناءً على slug
   useEffect(() => {
     async function fetchProduct() {
+      if (!slugId) return;
       setLoading(true);
+
       const { data, error } = await supabase
         .from('products')
         .select('*')
@@ -69,9 +63,9 @@ export default function DynamicProductLandingPage({ params }) {
       if (data && !error) {
         setProduct(data);
         setMainImage(data.image_url || (data.gallery && data.gallery[0]) || defaultGallery[0]);
-        setCurrentPrice(Number(data.price_pack2 || data.price || 3300));
+        setCurrentPrice(Number(data.price_pack2 || data.price_pack1 || 3300));
       } else {
-        // تجربة البحث عن أي منتج في حال عدم وجود الـ slug
+        // البحث عن أول منتج احتياطياً في حال عدم مطابقة الـ slug
         const { data: fallbackData } = await supabase.from('products').select('*').limit(1).single();
         if (fallbackData) {
           setProduct(fallbackData);
@@ -82,9 +76,7 @@ export default function DynamicProductLandingPage({ params }) {
       setLoading(false);
     }
 
-    if (slugId) {
-      fetchProduct();
-    }
+    fetchProduct();
   }, [slugId]);
 
   const shippingRates = {
@@ -119,42 +111,15 @@ export default function DynamicProductLandingPage({ params }) {
     "المسيلة": { home: 600, stop: 400 },
     "معسكر": { home: 700, stop: 450 },
     "ورقلة": { home: 1000, stop: 600 },
-    "وهران": { home: 700, stop: 450 },
-    "البيض": { home: 900, stop: 600 },
-    "إليزي": { home: 1700, stop: 1050 },
-    "برج بوعريريج": { home: 600, stop: 400 },
-    "بومرداس": { home: 600, stop: 400 },
-    "الطارف": { home: 600, stop: 400 },
-    "تندوف": { home: 1300, stop: 750 },
-    "تيسمسيلت": { home: 600, stop: 450 },
-    "الوادي": { home: 1000, stop: 600 },
-    "خنشلة": { home: 600, stop: 400 },
-    "سوق أهراس": { home: 600, stop: 400 },
-    "تيبازة": { home: 600, stop: 400 },
-    "ميلة": { home: 600, stop: 400 },
-    "عين الدفلى": { home: 700, stop: 450 },
-    "النعامة": { home: 900, stop: 600 },
-    "عين تموشنت": { home: 700, stop: 400 },
-    "غرداية": { home: 1000, stop: 600 },
-    "غليزان": { home: 700, stop: 450 },
-    "تيميمون": { home: 1300, stop: 800 },
-    "برج باجي مختار": { home: 1300, stop: 1200 },
-    "أولاد جلال": { home: 800, stop: 450 },
-    "بني عباس": { home: 1300, stop: 1200 },
-    "عين صالح": { home: 1300, stop: 1050 },
-    "عين قزام": { home: 1300, stop: 1050 },
-    "تقرت": { home: 1000, stop: 600 },
-    "جان": { home: 1300, stop: 1200 },
-    "المغير": { home: 1000, stop: 600 },
-    "المنيعة": { home: 1000, stop: 600 }
+    "وهران": { home: 700, stop: 450 }
   };
 
   const wilayasData = [
-    { code: "1", name: "01 - أدرار", communes: ["أدرار", "اقبلي", "أولف", "بودة", "فنوغيل", "إن زغمير", "أولاد أحمد تيمي", "رقان", "سالي", "السبع", "تامنطيط", "تامست", "تيمقتن", "تيت", "تسابيت", "زاوية كنتة"] },
-    { code: "16", name: "16 - الجزائر العاصمة", communes: ["الجزائر الوسطى", "باب الوادي", "سيدي امحمد", "الأبيار", "حيدرة", "بن عكنون", "الشراقة", "دالي إبراهيم", "الدرارية", "بئر مراد رايس", "بئر خادم", "القبة", "الحراش", "باب الزوار", "الدار البيضاء", "الرويبة", "زرالدة", "عين البنيان", "الرغاية", "البرج الكيفان", "الكاليتوس", "براقي", "باش جراح", "المقرية", "المرادية", "بوزريعة", "بني المسوس", "السحاولة", "الخرايسية", "العاشور"] },
-    { code: "19", name: "19 - سطيف", communes: ["سطيف", "العلمة", "عين أرنات", "عين أزال", "عين الكبيرة", "عين ولمان", "عموشة", "بوقاعة", "حمام السخنة", "صالح باي"] },
-    { code: "31", name: "31 - وهران", communes: ["وهران", "بئر الجير", "السانية", "عين الترك", "أرزيو", "قديل", "مسرغين", "بوسفر"] },
-    { code: "25", name: "25 - قسنطينة", communes: ["قسنطينة", "الخروب", "عين السمارة", "حامة بوزيان", "ديدوش مراد", "زيغود يوسف"] }
+    { code: "1", name: "01 - أدرار", communes: ["أدرار", "أولف", "رقان", "تيمقتن"] },
+    { code: "16", name: "16 - الجزائر العاصمة", communes: ["الجزائر الوسطى", "باب الوادي", "سيدي امحمد", "الشراقة", "دالي إبراهيم", "القبة", "الحراش", "باب الزوار", "الدار البيضاء", "الرويبة", "زرالدة"] },
+    { code: "19", name: "19 - سطيف", communes: ["سطيف", "العلمة", "عين أرنات", "عين الكبيرة", "عين ولمان", "بوقاعة"] },
+    { code: "31", name: "31 - وهران", communes: ["وهران", "بئر الجير", "السانية", "عين الترك", "أرزيو"] },
+    { code: "25", name: "25 - قسنطينة", communes: ["قسنطينة", "الخروب", "عين السمارة", "حامة بوزيان"] }
   ];
 
   useEffect(() => {
@@ -199,13 +164,9 @@ export default function DynamicProductLandingPage({ params }) {
   };
 
   const scrollToSection = (sectionId) => {
-    let targetId = sectionId === 'order-form' ? 'form-container' : sectionId;
-    const section = document.getElementById(targetId);
+    const section = document.getElementById(sectionId);
     if (section) {
-      const headerOffset = 95;
-      const elementPosition = section.getBoundingClientRect().top;
-      const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
-      window.scrollTo({ top: offsetPosition, behavior: "smooth" });
+      section.scrollIntoView({ behavior: 'smooth' });
     }
   };
 
@@ -215,7 +176,6 @@ export default function DynamicProductLandingPage({ params }) {
 
     setIsSubmitting(true);
     const orderId = "ORD-" + Math.floor(Math.random() * 899999 + 100000);
-    setCurrentActiveOrderId(orderId);
 
     const grandTotal = currentPrice + currentShippingCost;
     const grandTotalText = `${grandTotal.toLocaleString()} دج`;
@@ -268,15 +228,6 @@ export default function DynamicProductLandingPage({ params }) {
         whatsappLink: `https://wa.me/${STORE_WHATSAPP_NUMBER}?text=${customWhatsAppMsg}`
       });
 
-      setTrackingDetails({
-        orderId,
-        orderName: fullOrderDetails,
-        total: grandTotalText,
-        status: 'قيد التأكيد',
-        trackingCode: '28-H8G9NDFX0V-ZR',
-        customerName: formData.fullName
-      });
-
       setShowSuccessModal(true);
     } else {
       alert('حدث خطأ أثناء حفظ الطلب: ' + error.message);
@@ -300,8 +251,8 @@ export default function DynamicProductLandingPage({ params }) {
       <div className="min-h-screen bg-[#fdfbf7] flex items-center justify-center p-4" dir="rtl">
         <div className="text-center space-y-4 max-w-md bg-white p-8 rounded-3xl border shadow-lg">
           <h2 className="text-2xl font-black text-red-600">المنتج غير موجود</h2>
-          <p className="text-gray-600 text-sm">عذراً، لم نتمكن من العثور على هذا المنتج أو ربما تم تغييره.</p>
-          <a href="/" className="inline-block bg-[#754b2d] text-white px-6 py-2.5 rounded-xl font-bold text-sm">العودة للرئيسية</a>
+          <p className="text-gray-600 text-sm">عذراً، لم نتمكن من العثور على هذا المنتج أو ربما تم حذفه.</p>
+          <a href="/admin" className="inline-block bg-[#754b2d] text-white px-6 py-2.5 rounded-xl font-bold text-sm">العودة للوحة التحكم</a>
         </div>
       </div>
     );
@@ -311,7 +262,7 @@ export default function DynamicProductLandingPage({ params }) {
 
   return (
     <div className="min-h-screen bg-[#fdfbf7] text-gray-800 font-sans selection:bg-[#faedcd] selection:text-[#432818]" dir="rtl">
-      {/* Bar */}
+      {/* Top Bar */}
       <div className="bg-[#432818] text-[#f7f1e5] text-xs sm:text-sm py-2 px-4 text-center font-bold tracking-wide">
         <span>توصيل سريع لكافة الـ 58 ولاية | الدفع بعد المعاينة والإستلام</span>
       </div>
@@ -329,7 +280,7 @@ export default function DynamicProductLandingPage({ params }) {
         </div>
       </header>
 
-      {/* Hero */}
+      {/* Hero Showcase */}
       <section className="relative pt-6 pb-12">
         <div className="max-w-6xl mx-auto px-4">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
@@ -386,7 +337,7 @@ export default function DynamicProductLandingPage({ params }) {
                   <span className="text-xs font-bold text-gray-600">السعر الحالي:</span>
                   <span className="text-2xl font-black text-[#432818]">{currentPrice.toLocaleString()} دج</span>
                 </div>
-                <button onClick={() => scrollToSection('order-form')} className="w-full py-3 rounded-xl bg-[#754b2d] text-white font-extrabold text-base shadow-lg animate-pulse">
+                <button onClick={() => scrollToSection('order-form')} className="w-full py-3 rounded-xl bg-[#754b2d] text-white font-extrabold text-base shadow-lg animate-pulse cursor-pointer">
                   تأكيد الطلب والدفع عند الاستلام
                 </button>
               </div>
@@ -400,7 +351,7 @@ export default function DynamicProductLandingPage({ params }) {
       {/* Form */}
       <section id="order-form" className="py-12 bg-white">
         <div className="max-w-2xl mx-auto px-4">
-          <div id="form-container" className="bg-[#fdfbf7] rounded-3xl p-6 sm:p-8 border-2 border-[#faedcd] shadow-xl">
+          <div className="bg-[#fdfbf7] rounded-3xl p-6 sm:p-8 border-2 border-[#faedcd] shadow-xl">
             <h2 className="text-2xl font-black text-[#432818] text-center mb-6">استمارة الطلب المباشر</h2>
             
             <form onSubmit={handleFormSubmit} className="space-y-4">
@@ -452,7 +403,7 @@ export default function DynamicProductLandingPage({ params }) {
             <a href={lastOrderDetails.whatsappLink} target="_blank" rel="noreferrer" className="block w-full py-3.5 bg-[#25D366] text-white font-extrabold rounded-xl">
               تأكيد عبر واتساب 🟢
             </a>
-            <button onClick={() => setShowSuccessModal(false)} className="w-full py-2.5 bg-gray-100 text-gray-700 font-bold rounded-xl text-xs">
+            <button onClick={() => setShowSuccessModal(false)} className="w-full py-2.5 bg-gray-100 text-gray-700 font-bold rounded-xl text-xs cursor-pointer">
               إغلاق
             </button>
           </div>
