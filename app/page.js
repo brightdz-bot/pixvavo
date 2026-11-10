@@ -171,6 +171,7 @@ export default function StoreLandingPage() {
 
   const [searchInput, setSearchInput] = useState('');
   const [lastOrderDetails, setLastOrderDetails] = useState(null);
+  const [orders, setOrders] = useState([]);
 
   useEffect(() => {
     handleWilayaChange('الجزائر العاصمة');
@@ -190,7 +191,8 @@ export default function StoreLandingPage() {
     }
     return () => clearInterval(interval);
   }, [isUserInTrackingMode, currentActiveOrderId]);
-  // --- كود تحديث لوحة الأدمن تلقائياً ومباشرة من Supabase ---
+
+  // --- كود جلب وتحديث لوحة الأدمن تلقائياً (Supabase Realtime + Polling لـ Google Sheets) ---
   const fetchOrdersFromSupabase = async () => {
     const { data, error } = await supabase
       .from('orders')
@@ -198,33 +200,33 @@ export default function StoreLandingPage() {
       .order('created_at', { ascending: false });
 
     if (!error && data) {
-      // قم بتحديث المتغير الخاص بقائمة الطلبات في لوحة الأدمن
-      setOrders(data); 
+      setOrders(data);
     }
   };
 
   useEffect(() => {
-    // 1. جلب الطلبات عند فتح لوحة الأدمن
     fetchOrdersFromSupabase();
 
-    // 2. الاستماع الفوري لأي تغييرات تحدث في جدول orders على Supabase
+    const autoRefreshInterval = setInterval(() => {
+      fetchOrdersFromSupabase();
+    }, 5000);
+
     const subscription = supabase
       .channel('admin-orders-realtime')
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'orders' },
-        (payload) => {
-          // أول ما يتم تعديل حالة طلب أو إضافة طلب في سوبابيز/جوجل شيت يتم تحديث اللوحة فوراً
+        () => {
           fetchOrdersFromSupabase();
         }
       )
       .subscribe();
 
     return () => {
+      clearInterval(autoRefreshInterval);
       supabase.removeChannel(subscription);
     };
   }, []);
-  // -------------------------------------------------------------
 
   const handleWilayaChange = (selectedWilaya) => {
     let cleanWilaya = selectedWilaya.replace(/^\d+\s*-\s*/, '').trim();
