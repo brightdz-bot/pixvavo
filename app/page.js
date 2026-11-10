@@ -5,7 +5,7 @@ import { supabase } from '@/lib/supabaseClient';
 
 export default function StoreFront() {
   const [products, setProducts] = useState([]);
-  const [settings, setSettings] = useState({ store_name: 'pixvavo Store' });
+  const [settings, setSettings] = useState({ store_name: 'pixvavo' });
   const [cart, setCart] = useState([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
   
@@ -18,7 +18,6 @@ export default function StoreFront() {
   }, []);
 
   async function fetchStoreData() {
-    // جلب المنتجات والإعدادات من Supabase
     const { data: prodData } = await supabase.from('products').select('*');
     const { data: setData } = await supabase.from('settings').select('*').single();
     
@@ -77,11 +76,9 @@ export default function StoreFront() {
       total_price: total
     };
 
-    // 1. حفظ الطلب في Supabase
     const { error } = await supabase.from('orders').insert([orderPayload]);
 
     if (!error) {
-      // 2. إرسال إلى Google Apps Script Webhook
       if (settings.webhook_url) {
         fetch(settings.webhook_url, {
           method: 'POST',
@@ -93,7 +90,7 @@ export default function StoreFront() {
 
       if (window.fbq) window.fbq('track', 'Purchase', { value: total, currency: 'DZD' });
 
-      alert('تم إرسال طلبك بنجاح! سينصل بك فريقنا لتأكيد الطلب.');
+      alert('تم إرسال طلبك بنجاح! سيتصل بك فريقنا لتأكيد الطلب.');
       setCart([]);
       setIsCartOpen(false);
     } else {
@@ -103,7 +100,7 @@ export default function StoreFront() {
 
   return (
     <div className="min-h-screen bg-gray-50 text-gray-800 font-sans" dir="rtl">
-      <!-- Navbar -->
+      {/* Navbar */}
       <header className="bg-slate-900 text-white p-4 shadow-lg sticky top-0 z-40">
         <div className="max-w-6xl mx-auto flex justify-between items-center">
           <h1 className="text-2xl font-extrabold text-indigo-400">{settings.store_name}</h1>
@@ -116,7 +113,7 @@ export default function StoreFront() {
         </div>
       </header>
 
-      <!-- Store Front Products -->
+      {/* Store Front Products */}
       <main className="max-w-6xl mx-auto p-6 space-y-8">
         <div className="bg-indigo-900 text-white p-8 rounded-2xl shadow-md">
           <h2 className="text-3xl font-bold">أهلاً بك في {settings.store_name}</h2>
@@ -144,7 +141,7 @@ export default function StoreFront() {
         </div>
       </main>
 
-      <!-- Cart Drawer -->
+      {/* Cart Drawer */}
       {isCartOpen && (
         <div className="fixed inset-0 bg-black/50 z-50 flex justify-end">
           <div className="bg-white w-full max-w-md h-full p-6 overflow-y-auto flex flex-col justify-between">
@@ -165,7 +162,7 @@ export default function StoreFront() {
                 ))}
               </div>
 
-              <!-- Checkout Form -->
+              {/* Checkout Form */}
               <form id="order-form" onSubmit={handleSubmitOrder} className="space-y-3 border-t pt-4">
                 <h4 className="font-bold text-sm">بيانات الشحن (COD)</h4>
                 <input required placeholder="الاسم الكامل" className="w-full p-2 border rounded text-sm" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
