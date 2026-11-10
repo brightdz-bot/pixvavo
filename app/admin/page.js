@@ -95,11 +95,13 @@ export default function AdminDashboard() {
       description: formData.description,
       slug: formData.slug.toLowerCase().replace(/\s+/g, '-'),
       image_url: formData.image_url,
+      price: formData.price_pack2 ? Number(formData.price_pack2) : (formData.price_pack1 ? Number(formData.price_pack1) : 0), // ملء السعر الأساسي لتفادي الخطأ
       price_pack1: formData.price_pack1 ? Number(formData.price_pack1) : null,
       price_pack2: formData.price_pack2 ? Number(formData.price_pack2) : null,
       price_pack4: formData.price_pack4 ? Number(formData.price_pack4) : null,
       gallery: galleryArray
     };
+
 
     const { error } = await supabase.from('products').insert([payload]);
 
