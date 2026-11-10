@@ -5,8 +5,8 @@ import { supabase } from '../../lib/supabaseClient';
 
 export default function AdminDashboard() {
   // بيانات دخول الأدمن المعتمدة (يمكنك تغييرها هنا)
-  const ADMIN_EMAIL = 'admin@pixvavo.com';
-  const ADMIN_PASSWORD = '123456';
+  const ADMIN_EMAIL = 'adminstage@pixvavo.com';
+  const ADMIN_PASSWORD = 'bazarib2002';
 
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [emailInput, setEmailInput] = useState('');
