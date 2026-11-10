@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabaseClient';
 
 export default function StoreLandingPage() {
-  // State Constants & Configuration
   const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx_xl6iWvDlh2QDtLGgLQUz8fHh2ilJqyejT_18jm3gK_DGGPqg6olAyY3iZJVyu26a/exec';
   const STORE_WHATSAPP_NUMBER = '213798353165';
 
@@ -138,7 +137,6 @@ export default function StoreLandingPage() {
     "https://scontent.faae2-3.fna.fbcdn.net/v/t39.30808-6/893766167_2341182689969957_8414253250875486210_n.jpg?stp=dst-jpg_tt6&cstp=mx1199x1312&ctp=s565x565&_nc_cat=103&_nc_map=urlgen_bucketless&ccb=1-7&_nc_sid=127cfc&_nc_eui2=AeGDRWNHamjkGGVkQVDK1LwhpvI8MQD3gFmm8jwxAPeAWVsjMkOIgho1CRs-uAEicyxHv0gTJpRfbvUQFY-i-Vt8&_nc_ohc=sb3jekYWP7sQ7kNvwHIxq4O&_nc_oc=AdppMqyzjbPbBh3oRKPM_v5iICI9LcxLTfpEkVNho7n0u1TDAbpRvqKFan24DLvSJjg&_nc_zt=23&_nc_ht=scontent.faae2-3.fna&_nc_gid=dyPyq3g1lRTlQPchcBXw4w&_nc_ss=7b2a8&oh=00_AQR1vU6OeLmZpLPpXoT4VsApoAevd82wQ2SiBkhSABPLkw&oe=6AF57889"
   ];
 
-  // Component States
   const [selectedOffer, setSelectedOffer] = useState('pack2');
   const [currentPrice, setCurrentPrice] = useState(3300);
   const [currentBundleName, setCurrentBundleName] = useState('عرض القطعتين (باك المطبخ والحمام)');
@@ -158,12 +156,10 @@ export default function StoreLandingPage() {
   const [isUserInTrackingMode, setIsUserInTrackingMode] = useState(false);
   const [currentActiveOrderId, setCurrentActiveOrderId] = useState('');
 
-  // Modals visibility state
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [showNewOrderModal, setShowNewOrderModal] = useState(false);
   const [showOrderPromptModal, setShowOrderPromptModal] = useState(false);
 
-  // Order Details for Tracking
   const [trackingDetails, setTrackingDetails] = useState({
     orderId: '',
     orderName: '',
@@ -176,37 +172,24 @@ export default function StoreLandingPage() {
   const [searchInput, setSearchInput] = useState('');
   const [lastOrderDetails, setLastOrderDetails] = useState(null);
 
-  // Initialize Data & Facebook Pixel on Mount
   useEffect(() => {
     handleWilayaChange('الجزائر العاصمة');
-    initMetaPixel();
   }, []);
 
-  // Update shipping when wilaya or shippingType changes
   useEffect(() => {
     calculateShipping(formData.wilaya, formData.shippingType);
   }, [formData.wilaya, formData.shippingType]);
 
-  function initMetaPixel() {
-    if (window.fbq) return;
-    !function(f,b,e,v,n,t,s)
-    {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
-    n.callMethod.apply(n,arguments):n.queue.push(arguments)};
-    if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
-    n.queue=[];t=b.createElement(e);t.async=!0;
-    t.src=v;s=b.getElementsByTagName(e)[0];
-    s.parentNode.insertBefore(t,s)}(window, document,'script',
-    'https://connect.facebook.net/en_US/fbevents.js');
-    
-    window.fbq('init', '1130382356394829');
-    window.fbq('track', 'PageView');
-    window.fbq('track', 'ViewContent', {
-      content_name: 'حامل المناشف الخشبي بالجاذبية',
-      content_category: 'Home & Decor',
-      value: 3300,
-      currency: 'DZD'
-    });
-  }
+  useEffect(() => {
+    let interval;
+    if (isUserInTrackingMode && currentActiveOrderId) {
+      fetchOrderStatusJSONP(currentActiveOrderId);
+      interval = setInterval(() => {
+        fetchOrderStatusJSONP(currentActiveOrderId);
+      }, 8000);
+    }
+    return () => clearInterval(interval);
+  }, [isUserInTrackingMode, currentActiveOrderId]);
 
   const handleWilayaChange = (selectedWilaya) => {
     let cleanWilaya = selectedWilaya.replace(/^\d+\s*-\s*/, '').trim();
@@ -286,7 +269,6 @@ export default function StoreLandingPage() {
     const quantity = selectedOffer === 'pack2' ? 2 : selectedOffer === 'pack4' ? 4 : 1;
     const fullOrderDetails = `${currentBundleName} (الكمية: ${quantity})`;
 
-    // Supabase DB Sync
     const orderPayload = {
       customer_name: formData.fullName,
       phone: formData.phone,
@@ -299,7 +281,6 @@ export default function StoreLandingPage() {
     const { error } = await supabase.from('orders').insert([orderPayload]);
 
     if (!error) {
-      // Send to Google Sheets Script
       if (GOOGLE_SCRIPT_URL) {
         const scriptData = new URLSearchParams();
         scriptData.append('orderId', orderId);
@@ -316,8 +297,6 @@ export default function StoreLandingPage() {
 
         fetch(GOOGLE_SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: scriptData }).catch(() => {});
       }
-
-      if (window.fbq) window.fbq('track', 'Purchase', { value: grandTotal, currency: 'DZD' });
 
       const customWhatsAppMsg = encodeURIComponent(
         `السلام ${formData.fullName}،\n` +
@@ -425,11 +404,11 @@ export default function StoreLandingPage() {
           </div>
           <div className="flex items-center gap-2">
             <button onClick={() => scrollToSection('track-search-section')} className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-2 rounded-lg font-bold text-xs transition-all flex items-center gap-1.5 cursor-pointer">
-              <i className="fa-solid fa-magnifying-glass text-[#a3714c]"></i>
+              <svg className="w-3.5 h-3.5 fill-[#a3714c]" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
               <span className="hidden sm:inline">تتبع طلبك</span>
             </button>
             <button onClick={handleHeaderOrderClick} className="bg-[#754b2d] hover:bg-[#432818] text-white px-4 py-2 rounded-lg font-bold text-sm transition-all shadow-md flex items-center gap-2 cursor-pointer">
-              <i className="fa-solid fa-cart-shopping text-xs"></i>
+              <svg className="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24"><path d="M7 18c-1.1 0-1.99.9-1.99 2S5.9 22 7 22s2-.9 2-2-.9-2-2-2zM1 2v2h2l3.6 7.59-1.35 2.45c-.16.28-.25.61-.25.96 0 1.1.9 2 2 2h12v-2H7.42c-.14 0-.25-.11-.25-.25l.03-.12.9-1.63h7.45c.75 0 1.41-.41 1.75-1.03l3.58-6.49c.08-.14.12-.31.12-.48 0-.55-.45-1-1-1H5.21l-.94-2H1zm16 16c-1.1 0-1.99.9-1.99 2s.89 2 1.99 2 2-.9 2-2-.9-2-2-2z"/></svg>
               <span>أطلب الآن</span>
             </button>
           </div>
@@ -441,11 +420,11 @@ export default function StoreLandingPage() {
         <div className="max-w-6xl mx-auto px-4">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
             
-            {/* Gallery */}
+            {/* Media Image Showcase */}
             <div className="space-y-4">
               <div className="relative rounded-2xl overflow-hidden shadow-2xl border-4 border-white bg-white w-full h-[380px] sm:h-[450px]">
                 <span className="absolute top-4 right-4 z-10 bg-[#e63946] text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-lg flex items-center gap-1">
-                  <i className="fa-solid fa-fire"></i> الأكثر طلباً
+                  🔥 الأكثر طلباً
                 </span>
                 <img src={mainImage} className="w-full h-full object-cover" alt="Main product" />
               </div>
@@ -464,15 +443,11 @@ export default function StoreLandingPage() {
               </div>
             </div>
 
-            {/* Product Details */}
+            {/* Product Details & Interactive Cards */}
             <div className="space-y-4">
               <div className="flex items-center gap-2 text-amber-500 text-sm font-semibold">
-                <div className="flex gap-1">
-                  <i className="fa-solid fa-star"></i>
-                  <i className="fa-solid fa-star"></i>
-                  <i className="fa-solid fa-star"></i>
-                  <i className="fa-solid fa-star"></i>
-                  <i className="fa-solid fa-star"></i>
+                <div className="flex gap-1 text-amber-400">
+                  ★★★★★
                 </div>
               </div>
 
@@ -484,11 +459,10 @@ export default function StoreLandingPage() {
                 أضف لمسة جمالية وعصرية لحمامك أو مطبخك! مشبك تثبيت فريد مصنوع من الخشب الطبيعي المحمي ضد الرطوبة بدون ثقب الجدران.
               </p>
 
-              {/* Offer Selection */}
+              {/* Offer Cards */}
               <div className="space-y-2 pt-1">
                 <label className="block text-xs font-bold text-gray-700">اختر العرض المناسب لك:</label>
                 
-                {/* Pack 1 */}
                 <div
                   onClick={() => selectOffer('pack1', 1900)}
                   className={`p-3 rounded-xl border-2 flex items-center justify-between transition-all cursor-pointer ${selectedOffer === 'pack1' ? 'border-[#754b2d] bg-[#f7f1e5] shadow-md' : 'border-gray-200 bg-white'}`}
@@ -505,7 +479,6 @@ export default function StoreLandingPage() {
                   <span className="font-black text-[#432818] text-sm">1,900 دج</span>
                 </div>
 
-                {/* Pack 2 */}
                 <div
                   onClick={() => selectOffer('pack2', 3300)}
                   className={`p-3 rounded-xl border-2 flex items-center justify-between transition-all cursor-pointer relative overflow-hidden ${selectedOffer === 'pack2' ? 'border-[#754b2d] bg-[#f7f1e5] shadow-md' : 'border-gray-200 bg-white'}`}
@@ -526,7 +499,6 @@ export default function StoreLandingPage() {
                   </div>
                 </div>
 
-                {/* Pack 4 */}
                 <div
                   onClick={() => selectOffer('pack4', 6200)}
                   className={`p-3 rounded-xl border-2 flex items-center justify-between transition-all cursor-pointer ${selectedOffer === 'pack4' ? 'border-[#754b2d] bg-[#f7f1e5] shadow-md' : 'border-gray-200 bg-white'}`}
@@ -547,7 +519,7 @@ export default function StoreLandingPage() {
                 </div>
               </div>
 
-              {/* Price Summary Action */}
+              {/* Price Summary Box */}
               <div className="pt-2 p-3.5 rounded-2xl bg-gradient-to-r from-white to-[#faedcd] border border-[#faedcd] space-y-2.5">
                 <div className="flex items-baseline justify-between">
                   <span className="text-xs font-bold text-gray-600">السعر المختار الآن:</span>
@@ -557,7 +529,7 @@ export default function StoreLandingPage() {
                   onClick={() => scrollToSection('order-form')}
                   className="w-full py-3 px-6 rounded-xl bg-[#754b2d] hover:bg-[#432818] text-white font-extrabold text-base text-center shadow-lg transition-all flex items-center justify-center gap-2 animate-pulse cursor-pointer"
                 >
-                  <i className="fa-solid fa-basket-shopping"></i>
+                  <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M7 18c-1.1 0-1.99.9-1.99 2S5.9 22 7 22s2-.9 2-2-.9-2-2-2zM1 2v2h2l3.6 7.59-1.35 2.45c-.16.28-.25.61-.25.96 0 1.1.9 2 2 2h12v-2H7.42c-.14 0-.25-.11-.25-.25l.03-.12.9-1.63h7.45c.75 0 1.41-.41 1.75-1.03l3.58-6.49c.08-.14.12-.31.12-.48 0-.55-.45-1-1-1H5.21l-.94-2H1zm16 16c-1.1 0-1.99.9-1.99 2s.89 2 1.99 2 2-.9 2-2-.9-2-2-2z"/></svg>
                   <span>اضغط هنا لتأكيد الطلب والدفع عند الاستلام</span>
                 </button>
               </div>
@@ -571,10 +543,10 @@ export default function StoreLandingPage() {
       <section id="order-form" className="py-12 bg-white">
         <div className="max-w-3xl mx-auto px-4">
           
-          {/* Tracking Search Input */}
+          {/* Tracking Search Bar */}
           <div id="track-search-section" className={`mb-10 bg-[#fdfbf7] rounded-2xl p-6 border border-[#faedcd] shadow-sm text-center space-y-4 ${isUserInTrackingMode ? 'hidden' : ''}`}>
             <div className="flex items-center justify-center gap-2 text-[#432818] font-bold">
-              <i className="fa-solid fa-magnifying-glass text-[#a3714c]"></i>
+              <svg className="w-4 h-4 fill-[#a3714c]" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
               <span>هل لديك طلب سابق وتريد تتبعه؟</span>
             </div>
             <div className="flex gap-2 max-w-md mx-auto">
@@ -591,9 +563,13 @@ export default function StoreLandingPage() {
             </div>
           </div>
 
-          {/* Checkout Form Container */}
+          {/* Form Container */}
           <div id="form-container" className={`bg-[#fdfbf7] rounded-3xl p-6 sm:p-8 border-2 border-[#faedcd] shadow-xl ${isUserInTrackingMode ? 'hidden' : ''}`}>
+            
             <div className="text-center mb-8">
+              <div className="w-14 h-14 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-3 text-2xl font-black shadow-sm">
+                ✓
+              </div>
               <span className="inline-block px-3 py-1 rounded-full bg-[#faedcd] text-[#432818] font-extrabold text-xs mb-2">الدفع عند الاستلام 100%</span>
               <h2 className="text-2xl sm:text-3xl font-black text-[#432818]">استمارة طلب المنتج</h2>
               <p className="text-gray-600 text-xs sm:text-sm mt-1">يرجى ملء معلوماتك بدقة، وسيتصل بك فريقنا لتأكيد الطلب</p>
@@ -624,7 +600,6 @@ export default function StoreLandingPage() {
                     onChange={e => setFormData({ ...formData, fullName: e.target.value })}
                     className="w-full p-3.5 pr-10 rounded-xl border border-gray-300 focus:border-[#bc8a5f] focus:outline-none bg-white text-sm"
                   />
-                  <i className="fa-solid fa-user absolute right-3.5 top-4 text-gray-400"></i>
                 </div>
               </div>
 
@@ -640,7 +615,6 @@ export default function StoreLandingPage() {
                     onChange={e => setFormData({ ...formData, phone: e.target.value })}
                     className="w-full p-3.5 pr-10 rounded-xl border border-gray-300 focus:border-[#bc8a5f] focus:outline-none bg-white text-sm text-right"
                   />
-                  <i className="fa-solid fa-phone absolute right-3.5 top-4 text-gray-400"></i>
                 </div>
               </div>
 
@@ -708,26 +682,16 @@ export default function StoreLandingPage() {
                 type="submit"
                 className="w-full py-4 px-6 rounded-xl bg-[#754b2d] hover:bg-[#432818] text-white font-black text-xl shadow-xl transition-all flex items-center justify-center gap-3 cursor-pointer disabled:opacity-50"
               >
-                {isSubmitting ? (
-                  <>
-                    <i className="fa-solid fa-spinner animate-spin"></i>
-                    <span>جاري تأكيد طلبك...</span>
-                  </>
-                ) : (
-                  <>
-                    <i className="fa-solid fa-check-circle"></i>
-                    <span>تأكيد الطلب الآن (الدفع عند الاستلام)</span>
-                  </>
-                )}
+                {isSubmitting ? 'جاري تأكيد طلبك...' : 'تأكيد الطلب الآن (الدفع عند الاستلام)'}
               </button>
             </form>
           </div>
 
-          {/* Tracking Container */}
+          {/* Tracking Section */}
           <div id="tracking-container" className={`bg-white rounded-3xl p-6 sm:p-8 border-2 border-[#faedcd] shadow-xl space-y-6 ${!isUserInTrackingMode ? 'hidden' : ''}`}>
             <div className="text-center space-y-2 border-b pb-6">
-              <div className="w-14 h-14 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto text-2xl">
-                <i className="fa-solid fa-circle-check"></i>
+              <div className="w-14 h-14 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto text-2xl font-black">
+                ✓
               </div>
               <h2 className="text-2xl font-black text-gray-900">تفاصيل وتتبع طلبك</h2>
               <p className="text-xs text-gray-500">شكراً لثقتك بـ Bright DZ. يمكنك متابعة حالة طلبك أدناه</p>
@@ -748,6 +712,7 @@ export default function StoreLandingPage() {
               </div>
             </div>
 
+            {/* مراحل سير الطلب */}
             <div className="space-y-6 pt-4 px-2">
               <h3 className="font-bold text-gray-800 text-sm mb-4">مراحل سير الطلب:</h3>
               
@@ -755,11 +720,17 @@ export default function StoreLandingPage() {
                 const isActive = idx <= currentStatusIndex;
                 return (
                   <div key={idx} className="flex items-start gap-4 relative">
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs shrink-0 z-10 ${isActive ? 'bg-[#754b2d] text-white shadow-md' : 'bg-gray-200 text-gray-500'}`}>
-                      {idx === 0 && <i className="fa-solid fa-clock"></i>}
-                      {idx === 1 && <i className="fa-solid fa-check"></i>}
-                      {idx === 2 && <i className="fa-solid fa-truck"></i>}
-                      {idx === 3 && <i className="fa-solid fa-box-open"></i>}
+                    <div className={`w-9 h-9 rounded-full flex items-center justify-center font-bold text-sm shrink-0 z-10 ${isActive ? 'bg-[#754b2d] text-white shadow-md' : 'bg-gray-200 text-gray-400'}`}>
+                      {idx === 0 && (
+                        <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm1 11h-4V7h2v4h3z"/></svg>
+                      )}
+                      {idx === 1 && "✓"}
+                      {idx === 2 && (
+                        <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M20 8h-3V4H3c-1.1 0-2 .9-2 2v11h2c0 1.66 1.34 3 3 3s3-1.34 3-3h6c0 1.66 1.34 3 3 3s3-1.34 3-3h2v-5l-3-4zM6 18.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm13.5-1.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/></svg>
+                      )}
+                      {idx === 3 && (
+                        <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 3c1.93 0 3.5 1.57 3.5 3.5S13.93 13 12 13s-3.5-1.57-3.5-3.5S10.07 6 12 6z"/></svg>
+                      )}
                     </div>
                     <div className="space-y-1">
                       <h4 className={`font-bold text-sm ${isActive ? 'text-[#432818]' : 'text-gray-400'}`}>{stg}</h4>
@@ -786,16 +757,12 @@ export default function StoreLandingPage() {
                 )}`}
                 className="w-full py-3 bg-[#25D366] hover:bg-emerald-600 text-white font-bold rounded-xl transition flex items-center justify-center gap-2 text-sm shadow-md"
               >
-                <i className="fa-brands fa-whatsapp text-lg"></i>
                 <span>تواصل معنا عبر واتساب لمتابعة الطلب</span>
               </a>
             </div>
 
             <div className="pt-2">
-              <button
-                onClick={() => setShowOrderPromptModal(true)}
-                className="w-full py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold rounded-xl transition text-sm cursor-pointer"
-              >
+              <button onClick={() => setShowOrderPromptModal(true)} className="w-full py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold rounded-xl transition text-sm cursor-pointer">
                 إجراء طلب جديد أو بحث آخر
               </button>
             </div>
@@ -819,8 +786,8 @@ export default function StoreLandingPage() {
       {showSuccessModal && lastOrderDetails && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl p-6 sm:p-8 max-w-md w-full text-center space-y-4 shadow-2xl">
-            <div className="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto text-3xl">
-              <i className="fa-solid fa-check"></i>
+            <div className="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto text-3xl font-black">
+              ✓
             </div>
             <h3 className="text-2xl font-black text-gray-800">تم تسجيل طلبك بنجاح!</h3>
             
@@ -840,9 +807,7 @@ export default function StoreLandingPage() {
             </div>
 
             <div className="space-y-2 pt-1">
-              <p className="text-xs text-gray-500 font-medium">اضغط هنا لإرسال تأكيد الطلب عبر الواتساب:</p>
               <a href={lastOrderDetails.whatsappLink} target="_blank" rel="noreferrer" className="w-full py-3.5 bg-[#25D366] hover:bg-emerald-600 text-white font-extrabold rounded-xl transition flex items-center justify-center gap-2 text-sm shadow-md">
-                <i className="fa-brands fa-whatsapp text-lg"></i>
                 <span>تأكيد الطلب الآن عبر واتساب 🟢</span>
               </a>
             </div>
@@ -854,24 +819,17 @@ export default function StoreLandingPage() {
         </div>
       )}
 
-      {/* New Order Alert Modal */}
+      {/* New Order Modal */}
       {showNewOrderModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl p-6 max-w-sm w-full mx-4 shadow-2xl border border-[#f7f1e5] text-center space-y-4">
-            <div className="w-12 h-12 rounded-full bg-[#f7f1e5] text-[#754b2d] flex items-center justify-center mx-auto text-xl">
-              <i className="fa-solid fa-cart-plus"></i>
-            </div>
+          <div className="bg-white rounded-2xl p-6 max-w-sm w-full mx-4 shadow-2xl text-center space-y-4">
             <h3 className="text-lg font-black text-[#432818]">تأكيد طلب جديد</h3>
             <p className="text-sm text-gray-600">هل أنت متأكد من رغبتك في الانتقال لطلب منتج جديد وإضافته؟</p>
-            
             <div className="flex flex-col gap-2.5">
-              <button onClick={() => { setShowNewOrderModal(false); resetAndNewOrder(); }} className="w-full bg-[#754b2d] hover:bg-[#432818] text-white py-2.5 rounded-xl font-bold text-sm transition-all shadow-md cursor-pointer">
+              <button onClick={() => { setShowNewOrderModal(false); resetAndNewOrder(); }} className="w-full bg-[#754b2d] text-white py-2.5 rounded-xl font-bold text-sm">
                 الانتقال إلى صفحة الطلب
               </button>
-              <button onClick={() => { setShowNewOrderModal(false); setIsUserInTrackingMode(false); scrollToSection('offers-section'); }} className="w-full bg-[#f7f1e5] hover:bg-[#faedcd] text-[#432818] py-2.5 rounded-xl font-bold text-sm transition-all cursor-pointer">
-                اختر الباقة المناسبة
-              </button>
-              <button onClick={() => setShowNewOrderModal(false)} className="w-full text-gray-500 hover:text-gray-700 py-1.5 text-xs font-semibold cursor-pointer">
+              <button onClick={() => setShowNewOrderModal(false)} className="w-full text-gray-500 py-1.5 text-xs font-semibold">
                 إلغاء
               </button>
             </div>
@@ -882,25 +840,19 @@ export default function StoreLandingPage() {
       {/* Order Prompt Modal */}
       {showOrderPromptModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl p-6 max-w-sm w-full mx-4 shadow-2xl border border-[#f7f1e5] text-center space-y-4">
-            <div className="w-12 h-12 rounded-full bg-[#f7f1e5] text-[#754b2d] flex items-center justify-center mx-auto text-xl">
-              <i className="fa-solid fa-receipt"></i>
-            </div>
+          <div className="bg-white rounded-2xl p-6 max-w-sm w-full mx-4 shadow-2xl text-center space-y-4">
             <h3 className="text-lg font-black text-[#432818]">معلومات طلبك الحالي</h3>
-            <p className="text-xs text-gray-500">رقم الأوردر الخاص بك (احتفظ به لتتبع طلبك لاحقاً):</p>
-            
             <div className="bg-[#fdfbf7] p-3 rounded-xl border border-[#faedcd] flex items-center justify-between">
               <span className="font-black text-[#432818] text-base tracking-wider">{currentActiveOrderId || 'ORD-XXXXXX'}</span>
-              <button onClick={copyPromptOrderId} className="bg-[#754b2d] text-white px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-[#432818] transition">
+              <button onClick={copyPromptOrderId} className="bg-[#754b2d] text-white px-3 py-1.5 rounded-lg text-xs font-bold">
                 نسخ الرقم
               </button>
             </div>
-
             <div className="flex flex-col gap-2 pt-2">
-              <button onClick={() => { setShowOrderPromptModal(false); resetAndNewOrder(); }} className="w-full bg-[#754b2d] hover:bg-[#432818] text-white py-2.5 rounded-xl font-bold text-sm transition-all shadow-md cursor-pointer">
+              <button onClick={() => { setShowOrderPromptModal(false); resetAndNewOrder(); }} className="w-full bg-[#754b2d] text-white py-2.5 rounded-xl font-bold text-sm">
                 إجراء طلب جديد 🛒
               </button>
-              <button onClick={() => setShowOrderPromptModal(false)} className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 py-2.5 rounded-xl font-bold text-sm transition-all cursor-pointer">
+              <button onClick={() => setShowOrderPromptModal(false)} className="w-full bg-gray-100 text-gray-700 py-2.5 rounded-xl font-bold text-sm">
                 تتبع طلبه (البقاء على صفحة التتبع) 📍
               </button>
             </div>
