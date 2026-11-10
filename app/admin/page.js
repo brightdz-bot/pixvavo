@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabaseClient';
 
 export default function AdminDashboard() {
-  // بيانات دخول الأدمن المعتمدة (يمكنك تغييرها هنا)
   const ADMIN_EMAIL = 'adminstage@pixvavo.com';
   const ADMIN_PASSWORD = 'bazarib2002';
 
@@ -24,10 +23,12 @@ export default function AdminDashboard() {
     price_pack1: '',
     price_pack2: '',
     price_pack4: '',
-    galleryText: ''
+    galleryText: '',
+    primary_color: '#754b2d',
+    form_position: 'bottom',
+    price_box_position: 'below_description'
   });
 
-  // التحقق من وجود جلسة سابقة متذكرة تسجيل الدخول
   useEffect(() => {
     const savedAuth = localStorage.getItem('admin_authenticated');
     if (savedAuth === 'true') {
@@ -95,18 +96,20 @@ export default function AdminDashboard() {
       description: formData.description,
       slug: formData.slug.toLowerCase().replace(/\s+/g, '-'),
       image_url: formData.image_url,
-      price: formData.price_pack2 ? Number(formData.price_pack2) : (formData.price_pack1 ? Number(formData.price_pack1) : 0), // ملء السعر الأساسي لتفادي الخطأ
+      price: formData.price_pack2 ? Number(formData.price_pack2) : (formData.price_pack1 ? Number(formData.price_pack1) : 0),
       price_pack1: formData.price_pack1 ? Number(formData.price_pack1) : null,
       price_pack2: formData.price_pack2 ? Number(formData.price_pack2) : null,
       price_pack4: formData.price_pack4 ? Number(formData.price_pack4) : null,
-      gallery: galleryArray
+      gallery: galleryArray,
+      primary_color: formData.primary_color,
+      form_position: formData.form_position,
+      price_box_position: formData.price_box_position
     };
-
 
     const { error } = await supabase.from('products').insert([payload]);
 
     if (!error) {
-      alert('تمت إضافة المنتج بنجاح!');
+      alert('تمت إضافة المنتج مخصصاً وتوليد صفحة الهبوط فوراً!');
       setFormData({
         title: '',
         subtitle: '',
@@ -116,7 +119,10 @@ export default function AdminDashboard() {
         price_pack1: '',
         price_pack2: '',
         price_pack4: '',
-        galleryText: ''
+        galleryText: '',
+        primary_color: '#754b2d',
+        form_position: 'bottom',
+        price_box_position: 'below_description'
       });
       fetchProducts();
     } else {
@@ -135,7 +141,6 @@ export default function AdminDashboard() {
     }
   };
 
-  // شاشة تسجيل الدخول بالتصميم الجديد (البريد الإلكتروني + كلمة السر)
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4" dir="rtl">
@@ -185,7 +190,6 @@ export default function AdminDashboard() {
     );
   }
 
-  // الواجهة الرئيسية للوحة التحكم بعد تسجيل الدخول
   return (
     <div className="min-h-screen bg-gray-50 text-gray-800 p-4 sm:p-8" dir="rtl">
       <div className="max-w-5xl mx-auto space-y-8">
@@ -193,8 +197,8 @@ export default function AdminDashboard() {
         {/* Header */}
         <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 flex justify-between items-center">
           <div>
-            <h1 className="text-2xl font-black text-[#432818]">لوحة تحكم المنتجات الصفحات الديناميكية</h1>
-            <p className="text-xs text-gray-500 mt-1">أضف منتجاً جديداً ليصبح له رابط صفحة هبوط مستقلة تلقائياً</p>
+            <h1 className="text-2xl font-black text-[#432818]">لوحة تحكم المنتجات وتخصيص الواجهات</h1>
+            <p className="text-xs text-gray-500 mt-1">إضافة منتجات وتعديل الترتيب والألوان بضغطة زر</p>
           </div>
           <div className="flex items-center gap-3">
             <span className="bg-[#faedcd] text-[#432818] text-xs font-bold px-3 py-1.5 rounded-full">
@@ -202,16 +206,16 @@ export default function AdminDashboard() {
             </span>
             <button
               onClick={handleLogout}
-              className="bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold px-3 py-1.5 rounded-lg transition"
+              className="bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold px-3 py-1.5 rounded-lg transition cursor-pointer"
             >
               تسجيل الخروج 🚪
             </button>
           </div>
         </div>
 
-        {/* Add Product Form */}
+        {/* Form */}
         <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 space-y-4">
-          <h2 className="text-lg font-bold text-gray-800 border-b pb-3">إضافة منتج جديد</h2>
+          <h2 className="text-lg font-bold text-gray-800 border-b pb-3">إضافة وتخصيص منتج جديد</h2>
           
           <form onSubmit={handleAddProduct} className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -223,7 +227,7 @@ export default function AdminDashboard() {
                   placeholder="مثال: حامل المناشف الخشبي"
                   value={formData.title}
                   onChange={e => handleTitleChange(e.target.value)}
-                  className="w-full p-3 rounded-xl border border-gray-300 text-sm focus:outline-none focus:border-[#754b2d]"
+                  className="w-full p-3 rounded-xl border border-gray-300 text-sm"
                 />
               </div>
 
@@ -234,8 +238,48 @@ export default function AdminDashboard() {
                   placeholder="مثال: بنظام القفل بالجاذبية"
                   value={formData.subtitle}
                   onChange={e => setFormData({ ...formData, subtitle: e.target.value })}
-                  className="w-full p-3 rounded-xl border border-gray-300 text-sm focus:outline-none focus:border-[#754b2d]"
+                  className="w-full p-3 rounded-xl border border-gray-300 text-sm"
                 />
+              </div>
+            </div>
+
+            {/* تخصيص الترتيب والألوان */}
+            <div className="bg-amber-50/60 p-4 rounded-xl border border-amber-200 grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div>
+                <label className="block text-xs font-bold text-gray-700 mb-1">اللون الرئيسي للأزرار</label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="color"
+                    value={formData.primary_color}
+                    onChange={e => setFormData({ ...formData, primary_color: e.target.value })}
+                    className="w-10 h-10 rounded-lg cursor-pointer border"
+                  />
+                  <span className="text-xs font-mono font-bold">{formData.primary_color}</span>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-gray-700 mb-1">مكان نموذج الطلب</label>
+                <select
+                  value={formData.form_position}
+                  onChange={e => setFormData({ ...formData, form_position: e.target.value })}
+                  className="w-full p-2.5 rounded-xl border border-gray-300 text-xs bg-white font-bold"
+                >
+                  <option value="bottom">في الأسفل (الوضع الافتراضي)</option>
+                  <option value="top">في الأعلى (تحت الهيدر مباشرة)</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-gray-700 mb-1">موقع صندوق الأسعار</label>
+                <select
+                  value={formData.price_box_position}
+                  onChange={e => setFormData({ ...formData, price_box_position: e.target.value })}
+                  className="w-full p-2.5 rounded-xl border border-gray-300 text-xs bg-white font-bold"
+                >
+                  <option value="below_description">تحت وصف المنتج مباشرة</option>
+                  <option value="above_offers">فوق كروت العروض</option>
+                </select>
               </div>
             </div>
 
@@ -249,7 +293,7 @@ export default function AdminDashboard() {
                   placeholder="towel-holder"
                   value={formData.slug}
                   onChange={e => setFormData({ ...formData, slug: e.target.value })}
-                  className="w-full p-3 rounded-xl border border-gray-300 text-sm font-mono focus:outline-none focus:border-[#754b2d]"
+                  className="w-full p-3 rounded-xl border border-gray-300 text-sm font-mono"
                 />
               </div>
             </div>
@@ -261,7 +305,7 @@ export default function AdminDashboard() {
                 placeholder="تفاصيل ومميزات المنتج..."
                 value={formData.description}
                 onChange={e => setFormData({ ...formData, description: e.target.value })}
-                className="w-full p-3 rounded-xl border border-gray-300 text-sm focus:outline-none focus:border-[#754b2d]"
+                className="w-full p-3 rounded-xl border border-gray-300 text-sm"
               ></textarea>
             </div>
 
@@ -325,7 +369,7 @@ export default function AdminDashboard() {
               type="submit"
               className="w-full py-3.5 bg-[#754b2d] hover:bg-[#432818] text-white font-bold rounded-xl transition shadow-md cursor-pointer disabled:opacity-50"
             >
-              {saving ? 'جاري الإضافة...' : 'إضافة المنتج وإنشاء صفحة الهبوط فوراً 🚀'}
+              {saving ? 'جاري الإضافة والتنسيق...' : 'إضافة المنتج وإنشاء صفحة الهبوط المخصصة 🚀'}
             </button>
           </form>
         </div>
@@ -344,14 +388,17 @@ export default function AdminDashboard() {
                     <img src={prod.image_url || 'https://via.placeholder.com/60'} className="w-14 h-14 rounded-lg object-cover border" alt={prod.title} />
                     <div>
                       <h4 className="font-bold text-sm text-gray-900">{prod.title}</h4>
-                      <a
-                        href={`/products/${prod.slug}`}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="text-xs text-[#754b2d] hover:underline font-mono block mt-0.5"
-                      >
-                        /products/{prod.slug} ↗
-                      </a>
+                      <div className="flex items-center gap-2 mt-1">
+                        <span className="w-3 h-3 rounded-full border inline-block" style={{ backgroundColor: prod.primary_color || '#754b2d' }}></span>
+                        <a
+                          href={`/products/${prod.slug}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-xs text-[#754b2d] hover:underline font-mono"
+                        >
+                          /products/{prod.slug} ↗
+                        </a>
+                      </div>
                     </div>
                   </div>
                   
@@ -366,7 +413,7 @@ export default function AdminDashboard() {
                     </a>
                     <button
                       onClick={() => handleDeleteProduct(prod.id)}
-                      className="bg-red-50 hover:bg-red-100 text-red-600 text-xs font-bold px-3 py-2 rounded-lg"
+                      className="bg-red-50 hover:bg-red-100 text-red-600 text-xs font-bold px-3 py-2 rounded-lg cursor-pointer"
                     >
                       حذف 🗑️
                     </button>
