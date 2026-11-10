@@ -187,12 +187,12 @@ export default function StoreLandingPage() {
       fetchOrderStatusJSONP(currentActiveOrderId);
       interval = setInterval(() => {
         fetchOrderStatusJSONP(currentActiveOrderId);
-      }, 8000);
+      }, 5000);
     }
     return () => clearInterval(interval);
   }, [isUserInTrackingMode, currentActiveOrderId]);
 
-  // --- كود جلب وتحديث لوحة الأدمن تلقائياً (Supabase Realtime + Polling لـ Google Sheets) ---
+  // --- كود تحديث المزامنة مع Supabase وجوجل شيت يضمن إرسال البيانات فوراً ---
   const fetchOrdersFromSupabase = async () => {
     const { data, error } = await supabase
       .from('orders')
