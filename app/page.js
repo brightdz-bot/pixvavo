@@ -7,6 +7,92 @@ export default function StoreLandingPage() {
   const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx_xl6iWvDlh2QDtLGgLQUz8fHh2ilJqyejT_18jm3gK_DGGPqg6olAyY3iZJVyu26a/exec';
   const STORE_WHATSAPP_NUMBER = '213798353165';
 
+  const defaultGallery = [
+    "https://scontent.faae2-3.fna.fbcdn.net/v/t39.30808-6/891645324_2341177369970489_6005702391524640935_n.jpg?stp=dst-jpg_tt6&cstp=mx1254x1254&ctp=p526x296&_nc_cat=110&_nc_map=urlgen_bucketless&ccb=1-7&_nc_sid=127cfc&_nc_eui2=AeHdhaOT53EvVVuN9NaumDPny-pDc-qqsNzL6kNz6qqw3P_mVw5CayByftgunnY2ckgD-i9wvTT-MReTbSfqTiyv&_nc_ohc=E8fC4sMyOfoQ7kNvwElkwPD&_nc_oc=AdobGh5OBUdUwbVuvv0dctISmPFkouHTdJ-rq3V-9B5K483gdr-5UKA9sIQWP_U7rSM&_nc_zt=23&_nc_ht=scontent.faae2-3.fna&_nc_gid=z5ug3hUCiW643YapprSaWA&_nc_ss=7b2a8&oh=00_AQRYCIm-Gtx5SbJvWycYJ1VdSQxtDEVkoyhdHUkCGsUkuw&oe=6AF573F7",
+    "https://scontent.faae2-2.fna.fbcdn.net/v/t39.30808-6/893107494_2341154819972744_6609817046607056108_n.webp?stp=dst-jpg_tt6&cstp=mx713x713&ctp=p526x296&_nc_cat=108&_nc_map=urlgen_bucketless&ccb=1-7&_nc_sid=127cfc&_nc_eui2=AeEUiBgp__1VMfOytVLW3I42RlijLP_17dhGWKMs__Xt2HsepHgRurCBX99XkqAc6enDNV-T5BRehXfASxh7W0un&_nc_ohc=sMsTtlO2OGQQ7kNvwG7ndTi&_nc_oc=AdopCSR8mTp98fAQC0zUYOfXCUjayZEkYwLqxfqXs0a70wuuQLAVG5DMD1xbETktlsY&_nc_zt=23&_nc_ht=scontent.faae2-2.fna&_nc_gid=btZ0zcvrwe4psolAAlktIQ&_nc_ss=7b2a8&oh=00_AQRX1OrKwRVeVlz789DhryxEkN8zB0qQDzFFpcmMMhUGVA&oe=6AF55CA3",
+    "https://scontent.faae2-3.fna.fbcdn.net/v/t39.30808-6/891511582_2341173329970893_4980705526116754681_n.jpg?stp=dst-jpg_tt6&cstp=mx1211x1299&ctp=p180x540&_nc_cat=101&_nc_map=urlgen_bucketless&ccb=1-7&_nc_sid=127cfc&_nc_eui2=AeGS-CmRfRhdEQ1MjtxkDDsVHyV12QALE_sfJXXZAAsT-_2-buWGmNRbZepMtwQWHmjJ8bHkl4r3EdTEiIGkUPFj&_nc_ohc=H8rWNHxRZy4Q7kNvwEB1XB5&_nc_oc=AdruqhisUQCIqluc0te4nnskLMc_VCdOEl88fKrxoZ4S2S30g0xgjRoguLN50d4JIQg&_nc_zt=23&_nc_ht=scontent.faae2-3.fna&_nc_gid=wbVLmUNPmLHaxFvfdlWN4Q&_nc_ss=7b2a8&oh=00_AQQ3bg9wL1JfJB17c0sbgXutfF3e_J9YUzHO9WuDU0EDiw&oe=6AF587BB",
+    "https://scontent.faae2-3.fna.fbcdn.net/v/t39.30808-6/893766167_2341182689969957_8414253250875486210_n.jpg?stp=dst-jpg_tt6&cstp=mx1199x1312&ctp=s565x565&_nc_cat=103&_nc_map=urlgen_bucketless&ccb=1-7&_nc_sid=127cfc&_nc_eui2=AeGDRWNHamjkGGVkQVDK1LwhpvI8MQD3gFmm8jwxAPeAWVsjMkOIgho1CRs-uAEicyxHv0gTJpRfbvUQFY-i-Vt8&_nc_ohc=sb3jekYWP7sQ7kNvwHIxq4O&_nc_oc=AdppMqyzjbPbBh3oRKPM_v5iICI9LcxLTfpEkVNho7n0u1TDAbpRvqKFan24DLvSJjg&_nc_zt=23&_nc_ht=scontent.faae2-3.fna&_nc_gid=dyPyq3g1lRTlQPchcBXw4w&_nc_ss=7b2a8&oh=00_AQR1vU6OeLmZpLPpXoT4VsApoAevd82wQ2SiBkhSABPLkw&oe=6AF57889"
+  ];
+
+  // حالة المنتج الديناميكية من Supabase
+  const [product, setProduct] = useState({
+    title: 'حامل المناشف الخشبي الفاخر',
+    subtitle: 'بنظام القفل بالجاذبية',
+    description: 'أضف لمسة جمالية وعصرية لحمامك أو مطبخك! مشبك تثبيت فريد مصنوع من الخشب الطبيعي المحمي ضد الرطوبة بدون ثقب الجدران.',
+    image_url: defaultGallery[0],
+    gallery: defaultGallery,
+    price_pack1: 1900,
+    price_pack2: 3300,
+    price_pack4: 6200
+  });
+
+  const [selectedOffer, setSelectedOffer] = useState('pack2');
+  const [currentPrice, setCurrentPrice] = useState(3300);
+  const [currentBundleName, setCurrentBundleName] = useState('عرض القطعتين (باك المطبخ والحمام)');
+  const [currentShippingCost, setCurrentShippingCost] = useState(600);
+  const [mainImage, setMainImage] = useState(defaultGallery[0]);
+
+  const [formData, setFormData] = useState({
+    fullName: '',
+    phone: '',
+    wilaya: 'الجزائر العاصمة',
+    commune: '',
+    shippingType: 'home'
+  });
+
+  const [communesList, setCommunesList] = useState([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isUserInTrackingMode, setIsUserInTrackingMode] = useState(false);
+  const [currentActiveOrderId, setCurrentActiveOrderId] = useState('');
+
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showNewOrderModal, setShowNewOrderModal] = useState(false);
+  const [showOrderPromptModal, setShowOrderPromptModal] = useState(false);
+
+  const [trackingDetails, setTrackingDetails] = useState({
+    orderId: '',
+    orderName: '',
+    total: '',
+    status: 'قيد التأكيد',
+    trackingCode: '28-H8G9NDFX0V-ZR',
+    customerName: ''
+  });
+
+  const [searchInput, setSearchInput] = useState('');
+  const [lastOrderDetails, setLastOrderDetails] = useState(null);
+  const [orders, setOrders] = useState([]);
+
+  // جلب بيانات المنتج ديناميكياً والمزامنة الفورية مع Supabase
+  useEffect(() => {
+    async function fetchProductData() {
+      const { data, error } = await supabase.from('products').select('*').limit(1).single();
+      if (data && !error) {
+        setProduct(data);
+        if (data.image_url) setMainImage(data.image_url);
+        if (data.price_pack2) setCurrentPrice(Number(data.price_pack2));
+      }
+    }
+
+    fetchProductData();
+
+    const channel = supabase
+      .channel('products-realtime')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'products' }, (payload) => {
+        if (payload.new) {
+          setProduct(payload.new);
+          if (payload.new.image_url) setMainImage(payload.new.image_url);
+          if (selectedOffer === 'pack1') setCurrentPrice(Number(payload.new.price_pack1 || 1900));
+          else if (selectedOffer === 'pack2') setCurrentPrice(Number(payload.new.price_pack2 || 3300));
+          else if (selectedOffer === 'pack4') setCurrentPrice(Number(payload.new.price_pack4 || 6200));
+        }
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [selectedOffer]);
+
   const shippingRates = {
     "أدرار": { home: 1400, stop: 750 },
     "الشلف": { home: 600, stop: 400 },
@@ -130,49 +216,6 @@ export default function StoreLandingPage() {
     { code: "58", name: "58 - المنيعة", communes: ["المنيعة", "حاسي الفحل", "حاسي القارة"] }
   ];
 
-  const galleryImages = [
-    "https://scontent.faae2-3.fna.fbcdn.net/v/t39.30808-6/891645324_2341177369970489_6005702391524640935_n.jpg?stp=dst-jpg_tt6&cstp=mx1254x1254&ctp=p526x296&_nc_cat=110&_nc_map=urlgen_bucketless&ccb=1-7&_nc_sid=127cfc&_nc_eui2=AeHdhaOT53EvVVuN9NaumDPny-pDc-qqsNzL6kNz6qqw3P_mVw5CayByftgunnY2ckgD-i9wvTT-MReTbSfqTiyv&_nc_ohc=E8fC4sMyOfoQ7kNvwElkwPD&_nc_oc=AdobGh5OBUdUwbVuvv0dctISmPFkouHTdJ-rq3V-9B5K483gdr-5UKA9sIQWP_U7rSM&_nc_zt=23&_nc_ht=scontent.faae2-3.fna&_nc_gid=z5ug3hUCiW643YapprSaWA&_nc_ss=7b2a8&oh=00_AQRYCIm-Gtx5SbJvWycYJ1VdSQxtDEVkoyhdHUkCGsUkuw&oe=6AF573F7",
-    "https://scontent.faae2-2.fna.fbcdn.net/v/t39.30808-6/893107494_2341154819972744_6609817046607056108_n.webp?stp=dst-jpg_tt6&cstp=mx713x713&ctp=p526x296&_nc_cat=108&_nc_map=urlgen_bucketless&ccb=1-7&_nc_sid=127cfc&_nc_eui2=AeEUiBgp__1VMfOytVLW3I42RlijLP_17dhGWKMs__Xt2HsepHgRurCBX99XkqAc6enDNV-T5BRehXfASxh7W0un&_nc_ohc=sMsTtlO2OGQQ7kNvwG7ndTi&_nc_oc=AdopCSR8mTp98fAQC0zUYOfXCUjayZEkYwLqxfqXs0a70wuuQLAVG5DMD1xbETktlsY&_nc_zt=23&_nc_ht=scontent.faae2-2.fna&_nc_gid=btZ0zcvrwe4psolAAlktIQ&_nc_ss=7b2a8&oh=00_AQRX1OrKwRVeVlz789DhryxEkN8zB0qQDzFFpcmMMhUGVA&oe=6AF55CA3",
-    "https://scontent.faae2-3.fna.fbcdn.net/v/t39.30808-6/891511582_2341173329970893_4980705526116754681_n.jpg?stp=dst-jpg_tt6&cstp=mx1211x1299&ctp=p180x540&_nc_cat=101&_nc_map=urlgen_bucketless&ccb=1-7&_nc_sid=127cfc&_nc_eui2=AeGS-CmRfRhdEQ1MjtxkDDsVHyV12QALE_sfJXXZAAsT-_2-buWGmNRbZepMtwQWHmjJ8bHkl4r3EdTEiIGkUPFj&_nc_ohc=H8rWNHxRZy4Q7kNvwEB1XB5&_nc_oc=AdruqhisUQCIqluc0te4nnskLMc_VCdOEl88fKrxoZ4S2S30g0xgjRoguLN50d4JIQg&_nc_zt=23&_nc_ht=scontent.faae2-3.fna&_nc_gid=wbVLmUNPmLHaxFvfdlWN4Q&_nc_ss=7b2a8&oh=00_AQQ3bg9wL1JfJB17c0sbgXutfF3e_J9YUzHO9WuDU0EDiw&oe=6AF587BB",
-    "https://scontent.faae2-3.fna.fbcdn.net/v/t39.30808-6/893766167_2341182689969957_8414253250875486210_n.jpg?stp=dst-jpg_tt6&cstp=mx1199x1312&ctp=s565x565&_nc_cat=103&_nc_map=urlgen_bucketless&ccb=1-7&_nc_sid=127cfc&_nc_eui2=AeGDRWNHamjkGGVkQVDK1LwhpvI8MQD3gFmm8jwxAPeAWVsjMkOIgho1CRs-uAEicyxHv0gTJpRfbvUQFY-i-Vt8&_nc_ohc=sb3jekYWP7sQ7kNvwHIxq4O&_nc_oc=AdppMqyzjbPbBh3oRKPM_v5iICI9LcxLTfpEkVNho7n0u1TDAbpRvqKFan24DLvSJjg&_nc_zt=23&_nc_ht=scontent.faae2-3.fna&_nc_gid=dyPyq3g1lRTlQPchcBXw4w&_nc_ss=7b2a8&oh=00_AQR1vU6OeLmZpLPpXoT4VsApoAevd82wQ2SiBkhSABPLkw&oe=6AF57889"
-  ];
-
-  const [selectedOffer, setSelectedOffer] = useState('pack2');
-  const [currentPrice, setCurrentPrice] = useState(3300);
-  const [currentBundleName, setCurrentBundleName] = useState('عرض القطعتين (باك المطبخ والحمام)');
-  const [currentShippingCost, setCurrentShippingCost] = useState(600);
-  const [mainImage, setMainImage] = useState(galleryImages[0]);
-
-  const [formData, setFormData] = useState({
-    fullName: '',
-    phone: '',
-    wilaya: 'الجزائر العاصمة',
-    commune: '',
-    shippingType: 'home'
-  });
-
-  const [communesList, setCommunesList] = useState([]);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isUserInTrackingMode, setIsUserInTrackingMode] = useState(false);
-  const [currentActiveOrderId, setCurrentActiveOrderId] = useState('');
-
-  const [showSuccessModal, setShowSuccessModal] = useState(false);
-  const [showNewOrderModal, setShowNewOrderModal] = useState(false);
-  const [showOrderPromptModal, setShowOrderPromptModal] = useState(false);
-
-  const [trackingDetails, setTrackingDetails] = useState({
-    orderId: '',
-    orderName: '',
-    total: '',
-    status: 'قيد التأكيد',
-    trackingCode: '28-H8G9NDFX0V-ZR',
-    customerName: ''
-  });
-
-  const [searchInput, setSearchInput] = useState('');
-  const [lastOrderDetails, setLastOrderDetails] = useState(null);
-  const [orders, setOrders] = useState([]);
-
   useEffect(() => {
     handleWilayaChange('الجزائر العاصمة');
   }, []);
@@ -192,7 +235,6 @@ export default function StoreLandingPage() {
     return () => clearInterval(interval);
   }, [isUserInTrackingMode, currentActiveOrderId]);
 
-  // --- كود تحديث المزامنة مع Supabase وجوجل شيت يضمن إرسال البيانات فوراً ---
   const fetchOrdersFromSupabase = async () => {
     const { data, error } = await supabase
       .from('orders')
@@ -422,6 +464,9 @@ export default function StoreLandingPage() {
   const stages = ["قيد التأكيد", "التأكيد", "في شركة التوصيل", "التسليم"];
   const currentStatusIndex = Math.max(0, stages.indexOf(trackingDetails.status));
 
+  // الصور المنسقة للمعرض
+  const currentGallery = product.gallery && product.gallery.length > 0 ? product.gallery : defaultGallery;
+
   return (
     <div className="min-h-screen bg-[#fdfbf7] text-gray-800 font-sans selection:bg-[#faedcd] selection:text-[#432818]" dir="rtl">
       {/* Top Announcement Bar */}
@@ -452,7 +497,7 @@ export default function StoreLandingPage() {
         </div>
       </header>
 
-      {/* Hero Section */}
+      {/* Hero Section مع بيانات ديناميكية من Supabase */}
       <section id="offers-section" className="relative pt-6 pb-12 overflow-hidden">
         <div className="max-w-6xl mx-auto px-4">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
@@ -463,11 +508,11 @@ export default function StoreLandingPage() {
                 <span className="absolute top-4 right-4 z-10 bg-[#e63946] text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-lg flex items-center gap-1">
                   🔥 الأكثر طلباً
                 </span>
-                <img src={mainImage} className="w-full h-full object-cover" alt="Main product" />
+                <img src={mainImage || product.image_url} className="w-full h-full object-cover" alt={product.title} />
               </div>
               
               <div className="grid grid-cols-4 gap-2">
-                {galleryImages.map((imgUrl, idx) => (
+                {currentGallery.map((imgUrl, idx) => (
                   <button
                     key={idx}
                     type="button"
@@ -480,7 +525,7 @@ export default function StoreLandingPage() {
               </div>
             </div>
 
-            {/* Product Details & Interactive Cards */}
+            {/* Product Details & Dynamic Offer Cards */}
             <div className="space-y-4">
               <div className="flex items-center gap-2 text-amber-500 text-sm font-semibold">
                 <div className="flex gap-1 text-amber-400">
@@ -489,19 +534,19 @@ export default function StoreLandingPage() {
               </div>
 
               <h1 className="text-2xl sm:text-3xl font-extrabold text-[#432818] leading-tight">
-                حامل المناشف الخشبي الفاخر <span className="text-[#bc8a5f] block sm:inline">بنظام القفل بالجاذبية</span>
+                {product.title} <span className="text-[#bc8a5f] block sm:inline">{product.subtitle}</span>
               </h1>
 
               <p className="text-gray-600 text-sm sm:text-base leading-relaxed">
-                أضف لمسة جمالية وعصرية لحمامك أو مطبخك! مشبك تثبيت فريد مصنوع من الخشب الطبيعي المحمي ضد الرطوبة بدون ثقب الجدران.
+                {product.description}
               </p>
 
-              {/* Offer Cards */}
+              {/* Offer Cards (أسعار مجلوبة ديناميكياً من Supabase) */}
               <div className="space-y-2 pt-1">
                 <label className="block text-xs font-bold text-gray-700">اختر العرض المناسب لك:</label>
                 
                 <div
-                  onClick={() => selectOffer('pack1', 1900)}
+                  onClick={() => selectOffer('pack1', Number(product.price_pack1 || 1900))}
                   className={`p-3 rounded-xl border-2 flex items-center justify-between transition-all cursor-pointer ${selectedOffer === 'pack1' ? 'border-[#754b2d] bg-[#f7f1e5] shadow-md' : 'border-gray-200 bg-white'}`}
                 >
                   <div className="flex items-center gap-3">
@@ -513,11 +558,11 @@ export default function StoreLandingPage() {
                       <p className="text-[11px] text-gray-500">مناسب لحمام واحد أو مطبخ</p>
                     </div>
                   </div>
-                  <span className="font-black text-[#432818] text-sm">1,900 دج</span>
+                  <span className="font-black text-[#432818] text-sm">{Number(product.price_pack1 || 1900).toLocaleString()} دج</span>
                 </div>
 
                 <div
-                  onClick={() => selectOffer('pack2', 3300)}
+                  onClick={() => selectOffer('pack2', Number(product.price_pack2 || 3300))}
                   className={`p-3 rounded-xl border-2 flex items-center justify-between transition-all cursor-pointer relative overflow-hidden ${selectedOffer === 'pack2' ? 'border-[#754b2d] bg-[#f7f1e5] shadow-md' : 'border-gray-200 bg-white'}`}
                 >
                   <span className="absolute top-0 left-0 bg-[#e63946] text-white text-[9px] px-2 py-0.5 rounded-br-lg font-bold">توفير رائع</span>
@@ -531,13 +576,13 @@ export default function StoreLandingPage() {
                     </div>
                   </div>
                   <div className="text-left">
-                    <span className="font-black text-[#432818] text-sm">3,300 دج</span>
+                    <span className="font-black text-[#432818] text-sm">{Number(product.price_pack2 || 3300).toLocaleString()} دج</span>
                     <span className="text-[10px] text-gray-400 line-through block">3,800 دج</span>
                   </div>
                 </div>
 
                 <div
-                  onClick={() => selectOffer('pack4', 6200)}
+                  onClick={() => selectOffer('pack4', Number(product.price_pack4 || 6200))}
                   className={`p-3 rounded-xl border-2 flex items-center justify-between transition-all cursor-pointer ${selectedOffer === 'pack4' ? 'border-[#754b2d] bg-[#f7f1e5] shadow-md' : 'border-gray-200 bg-white'}`}
                 >
                   <div className="flex items-center gap-3">
@@ -550,7 +595,7 @@ export default function StoreLandingPage() {
                     </div>
                   </div>
                   <div className="text-left">
-                    <span className="font-black text-[#432818] text-sm">6,200 دج</span>
+                    <span className="font-black text-[#432818] text-sm">{Number(product.price_pack4 || 6200).toLocaleString()} دج</span>
                     <span className="text-[10px] text-gray-400 line-through block">7,600 دج</span>
                   </div>
                 </div>
@@ -617,12 +662,12 @@ export default function StoreLandingPage() {
                 <label className="block text-xs font-bold text-gray-700 mb-2">العرض المختار:</label>
                 <select
                   value={selectedOffer}
-                  onChange={e => selectOffer(e.target.value, e.target.value === 'pack1' ? 1900 : e.target.value === 'pack2' ? 3300 : 6200)}
+                  onChange={e => selectOffer(e.target.value, e.target.value === 'pack1' ? Number(product.price_pack1 || 1900) : e.target.value === 'pack2' ? Number(product.price_pack2 || 3300) : Number(product.price_pack4 || 6200))}
                   className="w-full p-3.5 rounded-xl border-2 border-[#faedcd] focus:border-[#bc8a5f] focus:outline-none bg-white font-bold text-sm text-[#432818]"
                 >
-                  <option value="pack1">العرض العادي: قطعة واحدة - 1,900 دج</option>
-                  <option value="pack2">عرض القطعتين (باك المطبخ والحمام): قطعتين - 3,300 دج (الأكثر طلباً)</option>
-                  <option value="pack4">العرض العائلي الفاخر: 4 قطع - 6,200 دج</option>
+                  <option value="pack1">العرض العادي: قطعة واحدة - {Number(product.price_pack1 || 1900).toLocaleString()} دج</option>
+                  <option value="pack2">عرض القطعتين (باك المطبخ والحمام): قطعتين - {Number(product.price_pack2 || 3300).toLocaleString()} دج (الأكثر طلباً)</option>
+                  <option value="pack4">العرض العائلي الفاخر: 4 قطع - {Number(product.price_pack4 || 6200).toLocaleString()} دج</option>
                 </select>
               </div>
 
