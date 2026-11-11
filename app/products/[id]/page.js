@@ -409,7 +409,7 @@ export default function DynamicProductLandingPage({ params }) {
     const { data: dbOrder } = await supabase
       .from('orders')
       .select('*')
-      .eq('id', cleanOrderId) // أو حسب حقل رقم الطلب لديك
+      .eq('id', cleanOrderId)
       .single();
 
     if (dbOrder && dbOrder.status) {
@@ -417,7 +417,7 @@ export default function DynamicProductLandingPage({ params }) {
         orderId: cleanOrderId,
         orderName: dbOrder.cart_items?.[0]?.title || 'منتج Bright DZ',
         total: `${dbOrder.total_price} دج`,
-        status: dbOrder.status, // الحالة المحدثة
+        status: dbOrder.status,
         customerName: dbOrder.customer_name
       });
       setIsUserInTrackingMode(true);
@@ -426,41 +426,41 @@ export default function DynamicProductLandingPage({ params }) {
       return;
     }
 
-    // 2. إذا لم يجدها في الداتابيز، يجلبها من رابط Google Sheet الخاص بهذا المنتج
+    // 2. إذا لم يجدها في الداتابيز، يجلبها من Google Sheet باستخدام JSONP لمعالجة مشكلة CORS
     const targetScriptUrl = product?.google_script_url || GOOGLE_SCRIPT_URL;
+    const callbackName = 'handleTrackingCallback_' + Math.floor(Math.random() * 1000000);
 
-    try {
-      const res = await fetch(`${targetScriptUrl}?action=getOrderStatus&orderId=${cleanOrderId}`);
-      const data = await res.json();
-
-      if (data && data.status) {
+    window[callbackName] = (data) => {
+      if (data && data.status && data.status !== 'not_found') {
         setTrackingDetails({
           orderId: cleanOrderId,
           orderName: data.orderName || product?.title || 'طلبك الحالي',
           total: data.total || '---',
-          status: data.status, // الحالة المحدثة المباشرة من الشيت
+          status: data.orderStatus || data.status,
           customerName: data.fullName || ''
         });
       } else {
-        // حالة افتراضية عند عدم العثور على الطلب
-        setTrackingDetails(prev => ({
-          ...prev,
-          orderId: cleanOrderId,
-          status: 'قيد التأكيد'
-        }));
+        alert("لم يتم العثور على هذا الطلب، يرجى التأكد من الرقم.");
       }
-    } catch (err) {
-      console.error("خطأ في جلب بيانات التتبع:", err);
-      setTrackingDetails(prev => ({
-        ...prev,
-        orderId: cleanOrderId,
-        status: 'قيد التأكيد'
-      }));
-    }
+      delete window[callbackName];
+      const scriptTag = document.getElementById(callbackName);
+      if (scriptTag) scriptTag.remove();
+      
+      setIsUserInTrackingMode(true);
+      setLoading(false);
+      scrollToSection('tracking-container');
+    };
 
-    setIsUserInTrackingMode(true);
-    setLoading(false);
-    scrollToSection('tracking-container');
+    const script = document.createElement('script');
+    script.id = callbackName;
+    script.src = `${targetScriptUrl}?action=getOrderStatus&orderId=${encodeURIComponent(cleanOrderId)}&callback=${callbackName}`;
+    script.onerror = () => {
+      alert("حدث خطأ أثناء الاتصال بقاعدة بيانات التتبع");
+      delete window[callbackName];
+      script.remove();
+      setLoading(false);
+    };
+    document.body.appendChild(script);
   };
     
   
