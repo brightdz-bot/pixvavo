@@ -62,36 +62,37 @@ export default function StoreLandingPage() {
   const [lastOrderDetails, setLastOrderDetails] = useState(null);
   const [orders, setOrders] = useState([]);
 
-  // جلب بيانات المنتج ديناميكياً والمزامنة الفورية مع Supabase
+// 1. جلب المنتج الأول تلقائياً من Supabase لربطه بالصفحة الرئيسية
   useEffect(() => {
-    async function fetchProductData() {
-      const { data, error } = await supabase.from('products').select('*').limit(1).single();
+    async function fetchMainProduct() {
+      setLoading(true);
+
+      const { data, error } = await supabase
+        .from('products')
+        .select('*')
+        .order('created_at', { ascending: true })
+        .limit(1)
+        .single();
+
       if (data && !error) {
         setProduct(data);
-        if (data.image_url) setMainImage(data.image_url);
-        if (data.price_pack2) setCurrentPrice(Number(data.price_pack2));
+        setMainImage(data.image_url || (data.gallery && data.gallery[0]) || defaultGallery[0]);
+        setCurrentPrice(Number(data.price_pack2 || data.price_pack1 || data.price || 3300));
+        setCurrentBundleName(data.pack2_name || data.pack1_name || 'العرض الأول');
       }
+      setLoading(false);
     }
 
-    fetchProductData();
+    fetchMainProduct();
+  }, []);
 
-    const channel = supabase
-      .channel('products-realtime')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'products' }, (payload) => {
-        if (payload.new) {
-          setProduct(payload.new);
-          if (payload.new.image_url) setMainImage(payload.new.image_url);
-          if (selectedOffer === 'pack1') setCurrentPrice(Number(payload.new.price_pack1 || 1900));
-          else if (selectedOffer === 'pack2') setCurrentPrice(Number(payload.new.price_pack2 || 3300));
-          else if (selectedOffer === 'pack4') setCurrentPrice(Number(payload.new.price_pack4 || 6200));
-        }
-      })
-      .subscribe();
+  useEffect(() => {
+    handleWilayaChange('الجزائر العاصمة');
+  }, []);
 
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [selectedOffer]);
+  useEffect(() => {
+    calculateShipping(formData.wilaya, formData.shippingType);
+  }, [formData.wilaya, formData.shippingType]);
 
   const shippingRates = {
     "أدرار": { home: 1400, stop: 750 },
