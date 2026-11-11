@@ -398,18 +398,72 @@ export default function DynamicProductLandingPage({ params }) {
     scrollToSection('tracking-container');
   };
 
-  const searchExistingOrder = () => {
+  const searchExistingOrder = async () => {
     if (!searchInput.trim()) return alert("يرجى إدخال رقم الطلب أولاً");
-    setCurrentActiveOrderId(searchInput.trim());
-    setTrackingDetails(prev => ({
-      ...prev,
-      orderId: searchInput.trim(),
-      orderName: 'جاري جلب تفاصيل المنتج...',
-      total: '---'
-    }));
+
+    const cleanOrderId = searchInput.trim();
+    setCurrentActiveOrderId(cleanOrderId);
+    setLoading(true);
+
+    // 1. محاولة الجلب أولاً من Supabase
+    const { data: dbOrder } = await supabase
+      .from('orders')
+      .select('*')
+      .eq('id', cleanOrderId) // أو حسب حقل رقم الطلب لديك
+      .single();
+
+    if (dbOrder && dbOrder.status) {
+      setTrackingDetails({
+        orderId: cleanOrderId,
+        orderName: dbOrder.cart_items?.[0]?.title || 'منتج Bright DZ',
+        total: `${dbOrder.total_price} دج`,
+        status: dbOrder.status, // الحالة المحدثة
+        customerName: dbOrder.customer_name
+      });
+      setIsUserInTrackingMode(true);
+      setLoading(false);
+      scrollToSection('tracking-container');
+      return;
+    }
+
+    // 2. إذا لم يجدها في الداتابيز، يجلبها من رابط Google Sheet الخاص بهذا المنتج
+    const targetScriptUrl = product?.google_script_url || GOOGLE_SCRIPT_URL;
+
+    try {
+      const res = await fetch(`${targetScriptUrl}?action=getOrderStatus&orderId=${cleanOrderId}`);
+      const data = await res.json();
+
+      if (data && data.status) {
+        setTrackingDetails({
+          orderId: cleanOrderId,
+          orderName: data.orderName || product?.title || 'طلبك الحالي',
+          total: data.total || '---',
+          status: data.status, // الحالة المحدثة المباشرة من الشيت
+          customerName: data.fullName || ''
+        });
+      } else {
+        // حالة افتراضية عند عدم العثور على الطلب
+        setTrackingDetails(prev => ({
+          ...prev,
+          orderId: cleanOrderId,
+          status: 'قيد التأكيد'
+        }));
+      }
+    } catch (err) {
+      console.error("خطأ في جلب بيانات التتبع:", err);
+      setTrackingDetails(prev => ({
+        ...prev,
+        orderId: cleanOrderId,
+        status: 'قيد التأكيد'
+      }));
+    }
+
     setIsUserInTrackingMode(true);
+    setLoading(false);
     scrollToSection('tracking-container');
   };
+    
+  
 
   if (loading) {
     return (
