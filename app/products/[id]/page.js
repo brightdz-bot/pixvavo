@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Script from 'next/script';
 import { supabase } from '../../../lib/supabaseClient';
 
 export default function DynamicProductLandingPage({ params }) {
@@ -14,7 +15,6 @@ export default function DynamicProductLandingPage({ params }) {
     });
   }, [params]);
 
-  const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx_xl6iWvDlh2QDtLGgLQUz8fHh2ilJqyejT_18jm3gK_DGGPqg6olAyY3iZJVyu26a/exec';
   const STORE_WHATSAPP_NUMBER = '213798353165';
 
   const defaultGallery = [
@@ -29,7 +29,7 @@ export default function DynamicProductLandingPage({ params }) {
 
   const [selectedOffer, setSelectedOffer] = useState('pack2');
   const [currentPrice, setCurrentPrice] = useState(3300);
-  const [currentBundleName, setCurrentBundleName] = useState('عرض القطعتين (باك المطبخ والحمام)');
+  const [currentBundleName, setCurrentBundleName] = useState('');
   const [currentShippingCost, setCurrentShippingCost] = useState(600);
   const [mainImage, setMainImage] = useState('');
 
@@ -199,13 +199,27 @@ export default function DynamicProductLandingPage({ params }) {
       if (data && !error) {
         setProduct(data);
         setMainImage(data.image_url || (data.gallery && data.gallery[0]) || defaultGallery[0]);
-        setCurrentPrice(Number(data.price_pack2 || data.price_pack1 || 3300));
+        
+        const initialPrice = Number(data.price_pack2 || data.price_pack1 || data.price || 3300);
+        setCurrentPrice(initialPrice);
+
+        if (data.price_pack2) {
+          setSelectedOffer('pack2');
+          setCurrentBundleName(data.pack2_name || 'عرض القطعتين');
+        } else if (data.price_pack1) {
+          setSelectedOffer('pack1');
+          setCurrentBundleName(data.pack1_name || 'العرض العادي');
+        } else if (data.price_pack4) {
+          setSelectedOffer('pack4');
+          setCurrentBundleName(data.pack4_name || 'العرض العائلي');
+        }
       } else {
         const { data: fallbackData } = await supabase.from('products').select('*').limit(1).single();
         if (fallbackData) {
           setProduct(fallbackData);
           setMainImage(fallbackData.image_url || defaultGallery[0]);
           setCurrentPrice(Number(fallbackData.price_pack2 || 3300));
+          setCurrentBundleName(fallbackData.pack2_name || 'عرض القطعتين');
         }
       }
       setLoading(false);
@@ -247,12 +261,17 @@ export default function DynamicProductLandingPage({ params }) {
     setCurrentShippingCost(cost);
   };
 
-  const selectOffer = (packId, price) => {
+  const selectOffer = (packId, price, name) => {
     setSelectedOffer(packId);
     setCurrentPrice(price);
-    if (packId === 'pack1') setCurrentBundleName('العرض العادي (قطعة واحدة)');
-    else if (packId === 'pack2') setCurrentBundleName('عرض القطعتين (باك المطبخ والحمام)');
-    else if (packId === 'pack4') setCurrentBundleName('العرض العائلي الفاخر (4 قطع)');
+    
+    let offerName = name;
+    if (!offerName) {
+      if (packId === 'pack1') offerName = product?.pack1_name || 'العرض العادي (قطعة واحدة)';
+      else if (packId === 'pack2') offerName = product?.pack2_name || 'عرض القطعتين';
+      else if (packId === 'pack4') offerName = product?.pack4_name || 'العرض العائلي الفاخر';
+    }
+    setCurrentBundleName(offerName);
   };
 
   const scrollToSection = (sectionId) => {
@@ -314,7 +333,9 @@ export default function DynamicProductLandingPage({ params }) {
     const { error } = await supabase.from('orders').insert([orderPayload]);
 
     if (!error) {
-      if (GOOGLE_SCRIPT_URL) {
+      const targetGoogleScript = product?.google_script_url || 'https://script.google.com/macros/s/AKfycbx_xl6iWvDlh2QDtLGgLQUz8fHh2ilJqyejT_18jm3gK_DGGPqg6olAyY3iZJVyu26a/exec';
+
+      if (targetGoogleScript) {
         const scriptData = new URLSearchParams();
         scriptData.append('orderId', orderId);
         scriptData.append('fullName', formData.fullName);
@@ -328,7 +349,11 @@ export default function DynamicProductLandingPage({ params }) {
         scriptData.append('productPrice', currentPrice.toString());
         scriptData.append('totalPrice', grandTotalText);
 
-        fetch(GOOGLE_SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: scriptData }).catch(() => {});
+        fetch(targetGoogleScript, { method: 'POST', mode: 'no-cors', body: scriptData }).catch(() => {});
+      }
+
+      if (typeof window !== 'undefined' && window.fbq) {
+        window.fbq('track', 'Purchase', { value: grandTotal, currency: 'DZD' });
       }
 
       const customWhatsAppMsg = encodeURIComponent(
@@ -411,6 +436,7 @@ export default function DynamicProductLandingPage({ params }) {
 
   const currentGallery = product.gallery && product.gallery.length > 0 ? product.gallery : defaultGallery;
   const primaryColor = product.primary_color || '#754b2d';
+  const targetPixelId = product.pixel_id || '1130382356394829';
 
   const stages = ["قيد التأكيد", "التأكيد", "في شركة التوصيل", "التسليم"];
   const currentStageIndex = stages.indexOf(trackingDetails.status) !== -1 ? stages.indexOf(trackingDetails.status) : 0;
@@ -461,15 +487,22 @@ export default function DynamicProductLandingPage({ params }) {
                   onChange={e => {
                     const pack = e.target.value;
                     let price = Number(product.price_pack1 || 1900);
-                    if (pack === 'pack2') price = Number(product.price_pack2 || 3300);
-                    if (pack === 'pack4') price = Number(product.price_pack4 || 6200);
-                    selectOffer(pack, price);
+                    let name = product.pack1_name || 'العرض العادي (قطعة واحدة)';
+                    if (pack === 'pack2') {
+                      price = Number(product.price_pack2 || 3300);
+                      name = product.pack2_name || 'عرض القطعتين';
+                    }
+                    if (pack === 'pack4') {
+                      price = Number(product.price_pack4 || 6200);
+                      name = product.pack4_name || 'العرض العائلي الفاخر (4 قطع)';
+                    }
+                    selectOffer(pack, price, name);
                   }}
                   className="w-full p-3.5 rounded-xl border-2 border-[#faedcd] focus:outline-none bg-white font-bold text-sm text-[#432818]"
                 >
-                  {product.price_pack1 && <option value="pack1">العرض العادي: قطعة واحدة - {Number(product.price_pack1).toLocaleString()} دج</option>}
-                  {product.price_pack2 && <option value="pack2">عرض القطعتين: قطعتين - {Number(product.price_pack2).toLocaleString()} دج (الأكثر طلباً)</option>}
-                  {product.price_pack4 && <option value="pack4">العرض العائلي الفاخر: 4 قطع - {Number(product.price_pack4).toLocaleString()} دج</option>}
+                  {product.price_pack1 && <option value="pack1">{product.pack1_name || 'العرض العادي: قطعة واحدة'} - {Number(product.price_pack1).toLocaleString()} دج</option>}
+                  {product.price_pack2 && <option value="pack2">{product.pack2_name || 'عرض القطعتين'} - {Number(product.price_pack2).toLocaleString()} دج (الأكثر طلباً)</option>}
+                  {product.price_pack4 && <option value="pack4">{product.pack4_name || 'العرض العائلي الفاخر: 4 قطع'} - {Number(product.price_pack4).toLocaleString()} دج</option>}
                 </select>
               </div>
 
@@ -597,9 +630,29 @@ export default function DynamicProductLandingPage({ params }) {
 
   return (
     <div className="min-h-screen bg-[#fdfbf7] text-gray-800 font-sans selection:bg-[#faedcd] selection:text-[#432818]" dir="rtl">
+      
+      {/* Meta Pixel Script */}
+      {targetPixelId && (
+        <Script id="fb-pixel" strategy="afterInteractive">
+          {`
+            !function(f,b,e,v,n,t,s)
+            {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+            n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+            if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+            n.queue=[];t=b.createElement(e);t.async=!0;
+            t.src=v;s=b.getElementsByTagName(e)[0];
+            s.parentNode.insertBefore(t,s)}(window, document,'script',
+            'https://connect.facebook.net/en_US/fbevents.js');
+            fbq('init', '${targetPixelId}');
+            fbq('track', 'PageView');
+            fbq('track', 'ViewContent', { content_name: '${product.title}', value: ${currentPrice}, currency: 'DZD' });
+          `}
+        </Script>
+      )}
+
       {/* Top Bar */}
       <div className="text-[#f7f1e5] text-xs sm:text-sm py-2 px-4 text-center font-bold tracking-wide" style={{ backgroundColor: primaryColor }}>
-        <span>توصيل سريع لكافة الـ 58 ولاية | الدفع بعد المعاينة والإستلام</span>
+        <span>{product.promo_badge || 'توصيل سريع لكافة الـ 58 ولاية | الدفع بعد المعاينة والإستلام'}</span>
       </div>
 
       {/* Header */}
@@ -642,7 +695,7 @@ export default function DynamicProductLandingPage({ params }) {
               </div>
             </div>
 
-            {/* Product Details & Interactive Offer Cards */}
+            {/* Product Details & Dynamic Interactive Offer Cards */}
             <div className="space-y-4">
               <h1 className="text-2xl sm:text-3xl font-extrabold text-[#432818]">
                 {product.title} <span className="block sm:inline" style={{ color: primaryColor }}>{product.subtitle}</span>
@@ -651,36 +704,36 @@ export default function DynamicProductLandingPage({ params }) {
 
               {product.price_box_position === 'below_description' && priceBox}
 
-              {/* بطاقات العروض التفاعلية */}
+              {/* بطاقات العروض التفاعلية - ديناميكية بالكامل وقابلة للتخصيص */}
               <div className="space-y-2 pt-1">
                 <label className="block text-xs font-bold text-gray-700">اختر العرض المناسب لك:</label>
                 
                 {product.price_pack1 && (
-                  <div onClick={() => selectOffer('pack1', Number(product.price_pack1))} className={`p-3 rounded-xl border-2 flex justify-between cursor-pointer ${selectedOffer === 'pack1' ? 'bg-[#f7f1e5]' : 'border-gray-200 bg-white'}`} style={{ borderColor: selectedOffer === 'pack1' ? primaryColor : '' }}>
+                  <div onClick={() => selectOffer('pack1', Number(product.price_pack1), product.pack1_name)} className={`p-3 rounded-xl border-2 flex justify-between cursor-pointer ${selectedOffer === 'pack1' ? 'bg-[#f7f1e5]' : 'border-gray-200 bg-white'}`} style={{ borderColor: selectedOffer === 'pack1' ? primaryColor : '' }}>
                     <div>
-                      <h4 className="font-bold text-xs sm:text-sm text-[#432818]">العرض العادي (قطعة واحدة)</h4>
-                      <p className="text-[11px] text-gray-500">مناسب لحمام واحد أو مطبخ</p>
+                      <h4 className="font-bold text-xs sm:text-sm text-[#432818]">{product.pack1_name || 'العرض العادي (قطعة واحدة)'}</h4>
+                      {product.pack1_desc && <p className="text-[11px] text-gray-500">{product.pack1_desc}</p>}
                     </div>
                     <span className="font-black text-[#432818] text-sm">{Number(product.price_pack1).toLocaleString()} دج</span>
                   </div>
                 )}
 
                 {product.price_pack2 && (
-                  <div onClick={() => selectOffer('pack2', Number(product.price_pack2))} className={`p-3 rounded-xl border-2 flex justify-between cursor-pointer relative ${selectedOffer === 'pack2' ? 'bg-[#f7f1e5]' : 'border-gray-200 bg-white'}`} style={{ borderColor: selectedOffer === 'pack2' ? primaryColor : '' }}>
+                  <div onClick={() => selectOffer('pack2', Number(product.price_pack2), product.pack2_name)} className={`p-3 rounded-xl border-2 flex justify-between cursor-pointer relative ${selectedOffer === 'pack2' ? 'bg-[#f7f1e5]' : 'border-gray-200 bg-white'}`} style={{ borderColor: selectedOffer === 'pack2' ? primaryColor : '' }}>
                     <span className="absolute top-0 left-0 bg-red-600 text-white text-[9px] px-2 py-0.5 rounded-br-lg font-bold">توفير رائع</span>
                     <div>
-                      <h4 className="font-bold text-xs sm:text-sm text-[#432818]">عرض القطعتين (باك المطبخ والحمام) 🔥</h4>
-                      <p className="text-[11px] text-gray-500">قطعتين لتغطية المنزل بالكامل</p>
+                      <h4 className="font-bold text-xs sm:text-sm text-[#432818]">{product.pack2_name || 'عرض القطعتين 🔥'}</h4>
+                      {product.pack2_desc && <p className="text-[11px] text-gray-500">{product.pack2_desc}</p>}
                     </div>
                     <span className="font-black text-[#432818] text-sm">{Number(product.price_pack2).toLocaleString()} دج</span>
                   </div>
                 )}
 
                 {product.price_pack4 && (
-                  <div onClick={() => selectOffer('pack4', Number(product.price_pack4))} className={`p-3 rounded-xl border-2 flex justify-between cursor-pointer ${selectedOffer === 'pack4' ? 'bg-[#f7f1e5]' : 'border-gray-200 bg-white'}`} style={{ borderColor: selectedOffer === 'pack4' ? primaryColor : '' }}>
+                  <div onClick={() => selectOffer('pack4', Number(product.price_pack4), product.pack4_name)} className={`p-3 rounded-xl border-2 flex justify-between cursor-pointer ${selectedOffer === 'pack4' ? 'bg-[#f7f1e5]' : 'border-gray-200 bg-white'}`} style={{ borderColor: selectedOffer === 'pack4' ? primaryColor : '' }}>
                     <div>
-                      <h4 className="font-bold text-xs sm:text-sm text-[#432818]">العرض العائلي الفاخر (4 قطع)</h4>
-                      <p className="text-[11px] text-gray-500">أقصى توفير للعائلات الكبيرة</p>
+                      <h4 className="font-bold text-xs sm:text-sm text-[#432818]">{product.pack4_name || 'العرض العائلي الفاخر (4 قطع)'}</h4>
+                      {product.pack4_desc && <p className="text-[11px] text-gray-500">{product.pack4_desc}</p>}
                     </div>
                     <span className="font-black text-[#432818] text-sm">{Number(product.price_pack4).toLocaleString()} دج</span>
                   </div>

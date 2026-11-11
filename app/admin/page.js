@@ -4,8 +4,8 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabaseClient';
 
 export default function AdminDashboard() {
-  const ADMIN_EMAIL = 'adminstage@pixvavo.com';
-  const ADMIN_PASSWORD = 'bazarib2002';
+  const ADMIN_EMAIL = 'admin@pixvavo.com';
+  const ADMIN_PASSWORD = '123456';
 
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [emailInput, setEmailInput] = useState('');
@@ -21,12 +21,18 @@ export default function AdminDashboard() {
     slug: '',
     image_url: '',
     price_pack1: '',
+    pack1_name: 'العرض العادي (قطعة واحدة)',
     price_pack2: '',
+    pack2_name: 'عرض القطعتين 🔥',
     price_pack4: '',
+    pack4_name: 'العرض العائلي (4 قطع)',
     galleryText: '',
     primary_color: '#754b2d',
     form_position: 'bottom',
-    price_box_position: 'below_description'
+    price_box_position: 'below_description',
+    pixel_id: '1130382356394829',
+    google_script_url: 'https://script.google.com/macros/s/AKfycbx_xl6iWvDlh2QDtLGgLQUz8fHh2ilJqyejT_18jm3gK_DGGPqg6olAyY3iZJVyu26a/exec',
+    promo_badge: 'توصيل سريع لكافة الـ 58 ولاية | الدفع بعد المعاينة والإستلام'
   });
 
   useEffect(() => {
@@ -98,18 +104,24 @@ export default function AdminDashboard() {
       image_url: formData.image_url,
       price: formData.price_pack2 ? Number(formData.price_pack2) : (formData.price_pack1 ? Number(formData.price_pack1) : 0),
       price_pack1: formData.price_pack1 ? Number(formData.price_pack1) : null,
+      pack1_name: formData.pack1_name,
       price_pack2: formData.price_pack2 ? Number(formData.price_pack2) : null,
+      pack2_name: formData.pack2_name,
       price_pack4: formData.price_pack4 ? Number(formData.price_pack4) : null,
+      pack4_name: formData.pack4_name,
       gallery: galleryArray,
       primary_color: formData.primary_color,
       form_position: formData.form_position,
-      price_box_position: formData.price_box_position
+      price_box_position: formData.price_box_position,
+      pixel_id: formData.pixel_id,
+      google_script_url: formData.google_script_url,
+      promo_badge: formData.promo_badge
     };
 
     const { error } = await supabase.from('products').insert([payload]);
 
     if (!error) {
-      alert('تمت إضافة المنتج مخصصاً وتوليد صفحة الهبوط فوراً!');
+      alert('تمت إضافة المنتج بنجاح وتوليد صفحة الهبوط المخصصة!');
       setFormData({
         title: '',
         subtitle: '',
@@ -117,12 +129,18 @@ export default function AdminDashboard() {
         slug: '',
         image_url: '',
         price_pack1: '',
+        pack1_name: 'العرض العادي (قطعة واحدة)',
         price_pack2: '',
+        pack2_name: 'عرض القطعتين 🔥',
         price_pack4: '',
+        pack4_name: 'العرض العائلي (4 قطع)',
         galleryText: '',
         primary_color: '#754b2d',
         form_position: 'bottom',
-        price_box_position: 'below_description'
+        price_box_position: 'below_description',
+        pixel_id: '1130382356394829',
+        google_script_url: 'https://script.google.com/macros/s/AKfycbx_xl6iWvDlh2QDtLGgLQUz8fHh2ilJqyejT_18jm3gK_DGGPqg6olAyY3iZJVyu26a/exec',
+        promo_badge: 'توصيل سريع لكافة الـ 58 ولاية | الدفع بعد المعاينة والإستلام'
       });
       fetchProducts();
     } else {
@@ -194,11 +212,10 @@ export default function AdminDashboard() {
     <div className="min-h-screen bg-gray-50 text-gray-800 p-4 sm:p-8" dir="rtl">
       <div className="max-w-5xl mx-auto space-y-8">
         
-        {/* Header */}
         <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 flex justify-between items-center">
           <div>
-            <h1 className="text-2xl font-black text-[#432818]">لوحة تحكم المنتجات وتخصيص الواجهات</h1>
-            <p className="text-xs text-gray-500 mt-1">إضافة منتجات وتعديل الترتيب والألوان بضغطة زر</p>
+            <h1 className="text-2xl font-black text-[#432818]">لوحة تحكم المنتجات وإعدادات الربط والتزيين</h1>
+            <p className="text-xs text-gray-500 mt-1">إضافة منتجات، ربط البيكسل وقوقل شيت، وتخصيص الواجهات</p>
           </div>
           <div className="flex items-center gap-3">
             <span className="bg-[#faedcd] text-[#432818] text-xs font-bold px-3 py-1.5 rounded-full">
@@ -213,7 +230,6 @@ export default function AdminDashboard() {
           </div>
         </div>
 
-        {/* Form */}
         <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 space-y-4">
           <h2 className="text-lg font-bold text-gray-800 border-b pb-3">إضافة وتخصيص منتج جديد</h2>
           
@@ -224,7 +240,7 @@ export default function AdminDashboard() {
                 <input
                   required
                   type="text"
-                  placeholder="مثال: حامل المناشف الخشبي"
+                  placeholder="اسم المنتج"
                   value={formData.title}
                   onChange={e => handleTitleChange(e.target.value)}
                   className="w-full p-3 rounded-xl border border-gray-300 text-sm"
@@ -235,7 +251,7 @@ export default function AdminDashboard() {
                 <label className="block text-xs font-bold text-gray-700 mb-1">العنوان الفرعي (Subtitle)</label>
                 <input
                   type="text"
-                  placeholder="مثال: بنظام القفل بالجاذبية"
+                  placeholder="وصف مختصر للعناوين"
                   value={formData.subtitle}
                   onChange={e => setFormData({ ...formData, subtitle: e.target.value })}
                   className="w-full p-3 rounded-xl border border-gray-300 text-sm"
@@ -243,7 +259,32 @@ export default function AdminDashboard() {
               </div>
             </div>
 
-            {/* تخصيص الترتيب والألوان */}
+            {/* الربط الإحترافي (Pixel & Google Sheet) */}
+            <div className="bg-blue-50/60 p-4 rounded-xl border border-blue-200 grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-bold text-blue-900 mb-1">Facebook Pixel ID 🎯</label>
+                <input
+                  type="text"
+                  placeholder="مثال: 1130382356394829"
+                  value={formData.pixel_id}
+                  onChange={e => setFormData({ ...formData, pixel_id: e.target.value })}
+                  className="w-full p-3 rounded-xl border border-blue-300 text-sm font-mono dir-ltr"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-blue-900 mb-1">رابط Google Sheet Web App 📊</label>
+                <input
+                  type="text"
+                  placeholder="https://script.google.com/macros/s/..."
+                  value={formData.google_script_url}
+                  onChange={e => setFormData({ ...formData, google_script_url: e.target.value })}
+                  className="w-full p-3 rounded-xl border border-blue-300 text-sm font-mono dir-ltr"
+                />
+              </div>
+            </div>
+
+            {/* التزيين والتنسيق */}
             <div className="bg-amber-50/60 p-4 rounded-xl border border-amber-200 grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div>
                 <label className="block text-xs font-bold text-gray-700 mb-1">اللون الرئيسي للأزرار</label>
@@ -265,7 +306,7 @@ export default function AdminDashboard() {
                   onChange={e => setFormData({ ...formData, form_position: e.target.value })}
                   className="w-full p-2.5 rounded-xl border border-gray-300 text-xs bg-white font-bold"
                 >
-                  <option value="bottom">في الأسفل (الوضع الافتراضي)</option>
+                  <option value="bottom">في الأسفل (افتراضي)</option>
                   <option value="top">في الأعلى (تحت الهيدر مباشرة)</option>
                 </select>
               </div>
@@ -284,13 +325,24 @@ export default function AdminDashboard() {
             </div>
 
             <div>
+              <label className="block text-xs font-bold text-gray-700 mb-1">الشريط الترويجي العلوي (Announcement Bar)</label>
+              <input
+                type="text"
+                placeholder="توصيل سريع لكافة الـ 58 ولاية | الدفع بعد المعاينة والإستلام"
+                value={formData.promo_badge}
+                onChange={e => setFormData({ ...formData, promo_badge: e.target.value })}
+                className="w-full p-3 rounded-xl border border-gray-300 text-sm"
+              />
+            </div>
+
+            <div>
               <label className="block text-xs font-bold text-gray-700 mb-1">رابط الصفحة (Slug) *</label>
               <div className="flex items-center gap-2">
                 <span className="text-xs text-gray-400 font-mono bg-gray-100 p-3 rounded-xl">/products/</span>
                 <input
                   required
                   type="text"
-                  placeholder="towel-holder"
+                  placeholder="product-name"
                   value={formData.slug}
                   onChange={e => setFormData({ ...formData, slug: e.target.value })}
                   className="w-full p-3 rounded-xl border border-gray-300 text-sm font-mono"
@@ -309,35 +361,58 @@ export default function AdminDashboard() {
               ></textarea>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div>
-                <label className="block text-xs font-bold text-gray-700 mb-1">سعر العرض الأول (Pack 1)</label>
+            {/* تخصيص أسماء وأسعار العروض الديناميكية */}
+            <div className="space-y-3 bg-gray-50 p-4 rounded-xl border">
+              <h3 className="text-xs font-bold text-gray-800 border-b pb-2">تخصيص العروض والباقات</h3>
+              
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <input
+                  type="text"
+                  placeholder="اسم العرض الأول (مثال: قطعة واحدة)"
+                  value={formData.pack1_name}
+                  onChange={e => setFormData({ ...formData, pack1_name: e.target.value })}
+                  className="p-2.5 rounded-lg border text-xs"
+                />
                 <input
                   type="number"
-                  placeholder="1900"
+                  placeholder="سعر العرض الأول"
                   value={formData.price_pack1}
                   onChange={e => setFormData({ ...formData, price_pack1: e.target.value })}
-                  className="w-full p-3 rounded-xl border border-gray-300 text-sm"
+                  className="p-2.5 rounded-lg border text-xs"
                 />
               </div>
-              <div>
-                <label className="block text-xs font-bold text-gray-700 mb-1">سعر العرض الثاني (Pack 2)</label>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <input
+                  type="text"
+                  placeholder="اسم العرض الثاني (مثال: عرض القطعتين 🔥)"
+                  value={formData.pack2_name}
+                  onChange={e => setFormData({ ...formData, pack2_name: e.target.value })}
+                  className="p-2.5 rounded-lg border text-xs"
+                />
                 <input
                   type="number"
-                  placeholder="3300"
+                  placeholder="سعر العرض الثاني"
                   value={formData.price_pack2}
                   onChange={e => setFormData({ ...formData, price_pack2: e.target.value })}
-                  className="w-full p-3 rounded-xl border border-gray-300 text-sm"
+                  className="p-2.5 rounded-lg border text-xs"
                 />
               </div>
-              <div>
-                <label className="block text-xs font-bold text-gray-700 mb-1">سعر العرض الثالث (Pack 4)</label>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <input
+                  type="text"
+                  placeholder="اسم العرض الثالث (مثال: العرض العائلي (4 قطع))"
+                  value={formData.pack4_name}
+                  onChange={e => setFormData({ ...formData, pack4_name: e.target.value })}
+                  className="p-2.5 rounded-lg border text-xs"
+                />
                 <input
                   type="number"
-                  placeholder="6200"
+                  placeholder="سعر العرض الثالث"
                   value={formData.price_pack4}
                   onChange={e => setFormData({ ...formData, price_pack4: e.target.value })}
-                  className="w-full p-3 rounded-xl border border-gray-300 text-sm"
+                  className="p-2.5 rounded-lg border text-xs"
                 />
               </div>
             </div>
@@ -354,7 +429,7 @@ export default function AdminDashboard() {
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-gray-700 mb-1">روابط صور المعرض الفرعية (ضع كل رابط في سطر)</label>
+              <label className="block text-xs font-bold text-gray-700 mb-1">روابط صور المعرض الفرعية (كل رابط في سطر)</label>
               <textarea
                 rows="3"
                 placeholder="https://image1.jpg&#10;https://image2.jpg"
@@ -369,12 +444,11 @@ export default function AdminDashboard() {
               type="submit"
               className="w-full py-3.5 bg-[#754b2d] hover:bg-[#432818] text-white font-bold rounded-xl transition shadow-md cursor-pointer disabled:opacity-50"
             >
-              {saving ? 'جاري الإضافة والتنسيق...' : 'إضافة المنتج وإنشاء صفحة الهبوط المخصصة 🚀'}
+              {saving ? 'جاري الإضافة والتنسيق...' : 'إضافة المنتج وإنشاء صفحة الهبوط فوراً 🚀'}
             </button>
           </form>
         </div>
 
-        {/* Existing Products List */}
         <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 space-y-4">
           <h2 className="text-lg font-bold text-gray-800 border-b pb-3">قائمة المنتجات الحالية</h2>
           
