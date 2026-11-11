@@ -7,12 +7,33 @@ import { supabase } from '../../../lib/supabaseClient';
 export default function DynamicProductLandingPage({ params }) {
   const [slugId, setSlugId] = useState('');
 
+// 1. فك تشفير params بشكل مباشر وبدون استدعاء منتجات قديمة كـ Fallback
   useEffect(() => {
-    Promise.resolve(params).then((resolvedParams) => {
-      if (resolvedParams && resolvedParams.id) {
-        setSlugId(resolvedParams.id);
+    async function initPage() {
+      const resolvedParams = await Promise.resolve(params);
+      const currentSlug = resolvedParams?.id;
+      
+      if (!currentSlug) return;
+      setSlugId(currentSlug);
+
+      setLoading(true);
+      // جلب المنتج الخاص بهاتين الصفحة والـ Slug المباشر فقط
+      const { data, error } = await supabase
+        .from('products')
+        .select('*')
+        .eq('slug', currentSlug)
+        .single();
+
+      if (data && !error) {
+        setProduct(data);
+        setMainImage(data.image_url || (data.gallery && data.gallery[0]) || defaultGallery[0]);
+        setCurrentPrice(Number(data.price_pack2 || data.price_pack1 || data.price || 3300));
+        setCurrentBundleName(data.pack2_name || data.pack1_name || 'العرض المختار');
       }
-    });
+      setLoading(false);
+    }
+
+    initPage();
   }, [params]);
 
   const STORE_WHATSAPP_NUMBER = '213798353165';
